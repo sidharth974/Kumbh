@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Kumbh Mela 2027 AI Assistant</title>
+<style>
+  :root {
+    --primary: #e65100;
+    --primary-light: #ff833a;
+    --primary-dark: #ac1900;
+    --bg: #fff8f0;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --text-light: #666;
+    --user-bubble: #fff3e0;
+    --bot-bubble: #ffffff;
+    --danger: #d32f2f;
+    --success: #2e7d32;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 10;
+  }
+  header h1 { font-size: 18px; font-weight: 600; }
+  header .subtitle { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .header-left .icon { font-size: 28px; }
+
+  /* Language selector */
+  .lang-select {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    outline: none;
+  }
+  .lang-select option { color: #333; background: white; }
+
+  /* Chat area */
+  .chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+  }
+
+  .message {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 15px;
+    line-height: 1.5;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user {
+    align-self: flex-end;
+    background: var(--user-bubble);
+    border: 1px solid #ffe0b2;
+    border-bottom-right-radius: 4px;
+  }
+  .message.bot {
+    align-self: flex-start;
+    background: var(--bot-bubble);
+    border: 1px solid #eee;
+    border-bottom-left-radius: 4px;
+  }
+  .message .lang-tag {
+    font-size: 10px;
+    color: var(--text-light);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .message .audio-play {
+    margin-top: 8px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .message .audio-play:hover { background: var(--primary-dark); }
+
+  .message.system {
+    align-self: center;
+    background: #f5f5f5;
+    color: var(--text-light);
+    font-size: 13px;
+    border: none;
+    max-width: 90%;
+    text-align: center;
+  }
+
+  .typing-indicator {
+    align-self: flex-start;
+    background: var(--bot-bubble);
+    border: 1px solid #eee;
+    padding: 12px 20px;
+    border-radius: 16px;
+    border-bottom-left-radius: 4px;
+    display: none;
+  }
+  .typing-indicator span {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: #ccc;
+    border-radius: 50%;
+    margin: 0 2px;
+    animation: bounce 1.4s infinite;
+  }
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-8px); }
+  }
+
+  /* Bottom controls */
+  .controls {
+    background: var(--card);
+    border-top: 1px solid #e0e0e0;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 10;
+  }
+
+  .text-input {
+    flex: 1;
+    border: 1.5px solid #ddd;
+    border-radius: 24px;
+    padding: 10px 16px;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .text-input:focus { border-color: var(--primary); }
+
+  .mic-btn {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .mic-btn:hover { background: var(--primary-dark); transform: scale(1.05); }
+  .mic-btn.recording {
+    background: var(--danger);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(211,47,47,0.4); }
+    70% { box-shadow: 0 0 0 15px rgba(211,47,47,0); }
+    100% { box-shadow: 0 0 0 0 rgba(211,47,47,0); }
+  }
+  .mic-btn:disabled { background: #ccc; cursor: not-allowed; animation: none; }
+
+  .send-btn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: var(--primary);
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .send-btn:hover { background: var(--primary-dark); }
+  .send-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+  /* Emergency bar */
+  .emergency-bar {
+    background: #ffebee;
+    border-top: 1px solid #ffcdd2;
+    padding: 8px 16px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    z-index: 10;
+  }
+  .emergency-bar button {
+    background: white;
+    border: 1px solid #ef9a9a;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+    color: var(--danger);
+    font-weight: 500;
+  }
+  .emergency-bar button:hover { background: #ffcdd2; }
+
+  /* Status bar */
+  .status-bar {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-light);
+    padding: 4px;
+    background: #fafafa;
+  }
+  .status-bar .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+  }
+  .dot.online { background: var(--success); }
+  .dot.offline { background: var(--danger); }
+
+  /* Welcome screen */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    gap: 12px;
+    opacity: 0.8;
+  }
+  .welcome .big-icon { font-size: 64px; }
+  .welcome h2 { font-size: 20px; color: var(--primary-dark); }
+  .welcome p { font-size: 14px; color: var(--text-light); max-width: 300px; }
+
+  /* Mobile tweaks */
+  @media (max-width: 480px) {
+    header h1 { font-size: 16px; }
+    .message { max-width: 90%; font-size: 14px; }
+    .text-input { font-size: 14px; padding: 8px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="icon">&#x1F6D5;</div>
+    <div>
+      <h1>Kumbh Mela 2027</h1>
+      <div class="subtitle">Nashik AI Assistant</div>
+    </div>
+  </div>
+  <select class="lang-select" id="langSelect">
+    <option value="hi">&#x1F1EE;&#x1F1F3; Hindi</option>
+    <option value="mr">&#x1F1EE;&#x1F1F3; Marathi</option>
+    <option value="en">&#x1F1EC;&#x1F1E7; English</option>
+    <option value="gu">&#x1F1EE;&#x1F1F3; Gujarati</option>
+    <option value="ta">&#x1F1EE;&#x1F1F3; Tamil</option>
+    <option value="te">&#x1F1EE;&#x1F1F3; Telugu</option>
+    <option value="kn">&#x1F1EE;&#x1F1F3; Kannada</option>
+    <option value="ml">&#x1F1EE;&#x1F1F3; Malayalam</option>
+  </select>
+</header>
+
+<div class="status-bar">
+  <span class="dot" id="statusDot"></span>
+  <span id="statusText">Connecting...</span>
+</div>
+
+<div class="chat-container" id="chatContainer">
+  <div class="welcome" id="welcomeScreen">
+    <div class="big-icon">&#x1F64F;</div>
+    <h2>Namaste!</h2>
+    <p>Ask anything about Nashik Kumbh Mela 2027 — schedules, ghats, places, transport, or emergencies.</p>
+    <p style="font-size:13px; margin-top:8px;">Tap the mic to speak or type below</p>
+  </div>
+</div>
+
+<div class="typing-indicator" id="typingIndicator">
+  <span></span><span></span><span></span>
+</div>
+
+<div class="emergency-bar">
+  <button onclick="sendEmergency('medical')">&#x1F691; Medical</button>
+  <button onclick="sendEmergency('missing_person')">&#x1F6A8; Missing Person</button>
+  <button onclick="sendEmergency('stampede')">&#x26A0;&#xFE0F; Stampede</button>
+  <button onclick="sendEmergency('fire')">&#x1F525; Fire</button>
+  <button onclick="sendEmergency('drowning')">&#x1F30A; Drowning</button>
+  <button onclick="showContacts()">&#x1F4DE; Helplines</button>
+</div>
+
+<div class="controls">
+  <input type="text" class="text-input" id="textInput" placeholder="Type your question..."
+         onkeydown="if(event.key==='Enter')sendText()">
+  <button class="send-btn" id="sendBtn" onclick="sendText()" title="Send">&#x27A4;</button>
+  <button class="mic-btn" id="micBtn" onclick="toggleRecording()" title="Hold to speak">&#x1F3A4;</button>
+</div>
+
+<script>
+const API = window.location.origin;
+let mediaRecorder = null;
+let audioChunks = [];
+let isRecording = false;
+let isProcessing = false;
+let currentAudio = null;
+
+const chatContainer = document.getElementById('chatContainer');
+const micBtn = document.getElementById('micBtn');
+const sendBtn = document.getElementById('sendBtn');
+const textInput = document.getElementById('textInput');
+const typingIndicator = document.getElementById('typingIndicator');
+const welcomeScreen = document.getElementById('welcomeScreen');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+
+// Health check
+async function checkHealth() {
+  try {
+    const r = await fetch(API + '/api/v1/health');
+    const d = await r.json();
+    statusDot.className = 'dot online';
+    statusText.textContent = `Online | ${d.total_documents} docs | ${d.backend}:${d.model}`;
+  } catch {
+    statusDot.className = 'dot offline';
+    statusText.textContent = 'Offline — server not reachable';
+  }
+}
+checkHealth();
+setInterval(checkHealth, 30000);
+
+function getLang() {
+  return document.getElementById('langSelect').value;
+}
+
+function hideWelcome() {
+  if (welcomeScreen) welcomeScreen.style.display = 'none';
+}
+
+function scrollToBottom() {
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function addMessage(text, type, lang, audioB64) {
+  hideWelcome();
+  const div = document.createElement('div');
+  div.className = `message ${type}`;
+
+  let html = '';
+  if (lang && type === 'bot') {
+    html += `<div class="lang-tag">${lang}</div>`;
+  }
+  html += `<div>${formatText(text)}</div>`;
+
+  if (audioB64) {
+    const btnId = 'play_' + Date.now();
+    html += `<button class="audio-play" id="${btnId}" onclick="playAudio('${btnId}', '${audioB64}')">&#x1F50A; Play response</button>`;
+  }
+
+  div.innerHTML = html;
+  chatContainer.appendChild(div);
+  scrollToBottom();
+  return div;
+}
+
+function formatText(text) {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+function showTyping() {
+  typingIndicator.style.display = 'block';
+  chatContainer.appendChild(typingIndicator);
+  scrollToBottom();
+}
+function hideTyping() {
+  typingIndicator.style.display = 'none';
+}
+
+function setProcessing(state) {
+  isProcessing = state;
+  micBtn.disabled = state;
+  sendBtn.disabled = state;
+  if (state) showTyping(); else hideTyping();
+}
+
+// Play base64 audio
+function playAudio(btnId, b64) {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+
+  // Detect format: gTTS returns MP3
+  const audio = new Audio('data:audio/mp3;base64,' + b64);
+  currentAudio = audio;
+
+  const btn = document.getElementById(btnId);
+  if (btn) btn.textContent = '... Playing';
+  audio.onended = () => { if (btn) btn.innerHTML = '&#x1F50A; Play again'; currentAudio = null; };
+  audio.onerror = () => { if (btn) btn.textContent = 'Audio error'; };
+  audio.play().catch(() => { if (btn) btn.textContent = 'Tap again'; });
+}
+
+// Auto-play audio response
+function autoPlayAudio(b64) {
+  if (!b64) return;
+  if (currentAudio) { currentAudio.pause(); }
+  const audio = new Audio('data:audio/mp3;base64,' + b64);
+  currentAudio = audio;
+  audio.play().catch(() => {});
+}
+
+// Text query
+async function sendText() {
+  const text = textInput.value.trim();
+  if (!text || isProcessing) return;
+
+  textInput.value = '';
+  addMessage(text, 'user');
+  setProcessing(true);
+
+  try {
+    const res = await fetch(API + '/api/v1/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: text, language: getLang() }),
+    });
+    const data = await res.json();
+    setProcessing(false);
+
+    // Try to get TTS for the response
+    let audioB64 = null;
+    try {
+      const ttsRes = await fetch(API + '/api/v1/voice/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: data.response || data.detail, language: data.language || getLang() }),
+      });
+      if (ttsRes.ok) {
+        const audioBlob = await ttsRes.arrayBuffer();
+        audioB64 = btoa(String.fromCharCode(...new Uint8Array(audioBlob)));
+      }
+    } catch {}
+
+    addMessage(data.response || data.detail || 'No response', 'bot', data.language, audioB64);
+    if (audioB64) autoPlayAudio(audioB64);
+  } catch (err) {
+    setProcessing(false);
+    addMessage('Could not reach server. Is the API running?', 'system');
+  }
+}
+
+// Voice recording
+async function toggleRecording() {
+  if (isProcessing) return;
+
+  if (isRecording) {
+    stopRecording();
+  } else {
+    startRecording();
+  }
+}
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { sampleRate: 16000, channelCount: 1 }
+    });
+
+    audioChunks = [];
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      sendVoice(blob);
+    };
+
+    mediaRecorder.start();
+    isRecording = true;
+    micBtn.classList.add('recording');
+    micBtn.innerHTML = '&#x23F9;';
+  } catch (err) {
+    addMessage('Microphone access denied. Please allow mic access and try again.', 'system');
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
+  isRecording = false;
+  micBtn.classList.remove('recording');
+  micBtn.innerHTML = '&#x1F3A4;';
+}
+
+async function sendVoice(audioBlob) {
+  setProcessing(true);
+  addMessage('(voice message sent)', 'user');
+
+  const formData = new FormData();
+  formData.append('audio', audioBlob, 'recording.webm');
+  formData.append('language', getLang());
+
+  try {
+    const res = await fetch(API + '/api/v1/voice/input', {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await res.json();
+    setProcessing(false);
+
+    // Show transcript
+    if (data.transcript) {
+      const userMsg = chatContainer.querySelector('.message.user:last-of-type');
+      if (userMsg) {
+        userMsg.innerHTML = `<div class="lang-tag">You said (${data.language})</div><div>${formatText(data.transcript)}</div>`;
+      }
+    }
+
+    // Show response with audio
+    addMessage(
+      data.response_text || 'No response',
+      'bot',
+      data.language,
+      data.audio_base64
+    );
+
+    // Auto-play response
+    if (data.audio_base64) autoPlayAudio(data.audio_base64);
+
+  } catch (err) {
+    setProcessing(false);
+    addMessage('Voice processing failed. Please try again.', 'system');
+  }
+}
+
+// Emergency
+async function sendEmergency(scenario) {
+  hideWelcome();
+  setProcessing(true);
+
+  try {
+    const res = await fetch(API + '/api/v1/emergency', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scenario, language: getLang() }),
+    });
+    const data = await res.json();
+    setProcessing(false);
+
+    let text = data.response || data.instructions || JSON.stringify(data);
+    if (data.helplines) {
+      text += '\n\n**Emergency Numbers:**';
+      for (const [name, num] of Object.entries(data.helplines)) {
+        text += `\n${name}: ${num}`;
+      }
+    }
+    addMessage(text, 'bot', getLang());
+  } catch {
+    setProcessing(false);
+    addMessage('Could not get emergency info. Call 112 for immediate help.', 'system');
+  }
+}
+
+async function showContacts() {
+  hideWelcome();
+  try {
+    const res = await fetch(API + '/api/v1/emergency/contacts');
+    const data = await res.json();
+    let text = '**Emergency Helplines:**\n';
+    if (data.helplines) {
+      for (const [k, v] of Object.entries(data.helplines)) {
+        text += `\n${k}: **${v}**`;
+      }
+    } else {
+      text = JSON.stringify(data, null, 2);
+    }
+    addMessage(text, 'bot', getLang());
+  } catch {
+    addMessage('Police: 100 | Ambulance: 108 | Kumbh Helpline: 1800-120-2027', 'system');
+  }
+}
+</script>
+</body>
+</html>
