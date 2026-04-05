@@ -35,7 +35,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from api.routes import query, voice, emergency, places, auth, sessions
+from api.routes import query, voice, emergency, places, feedback, auth, sessions
 from api.models.database import db
 from api.services.rag import get_rag
 from api.services.llm import get_llm
@@ -135,6 +135,7 @@ app.include_router(query.router,     prefix="/api/v1")
 app.include_router(voice.router,     prefix="/api/v1")
 app.include_router(emergency.router, prefix="/api/v1")
 app.include_router(places.router,    prefix="/api/v1")
+app.include_router(feedback.router,  prefix="/api/v1")
 app.include_router(auth.router,      prefix="/api/v1")
 app.include_router(sessions.router,  prefix="/api/v1")
 

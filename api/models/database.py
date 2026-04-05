@@ -73,6 +73,16 @@ class Database:
                     FOREIGN KEY (user_id) REFERENCES users(id)
                 );
 
+                CREATE TABLE IF NOT EXISTS feedback (
+                    id TEXT PRIMARY KEY,
+                    name TEXT,
+                    email TEXT,
+                    type TEXT,
+                    message TEXT,
+                    rating INTEGER DEFAULT 0,
+                    created_at TEXT NOT NULL
+                );
+
                 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
                 CREATE INDEX IF NOT EXISTS idx_sessions_conv ON sessions(conversation_id);
                 CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id);

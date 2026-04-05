@@ -4,6 +4,7 @@ Auth routes — register, login, profile, logout.
 
 import uuid
 import logging
+import threading
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Depends
@@ -46,7 +47,65 @@ async def register(req: RegisterRequest):
         phone=req.phone, preferred_language=req.preferred_language,
         avatar_url=None, created_at=now,
     )
+
+    # Send welcome email in background (non-blocking)
+    threading.Thread(target=send_welcome_email, args=(req.name, req.email), daemon=True).start()
+
     return AuthResponse(token=token, user=user)
+
+
+def send_welcome_email(name: str, email: str):
+    """Send welcome email after signup. Fails silently if SMTP not configured."""
+    import smtplib, os
+    from email.mime.multipart import MIMEMultipart
+    from email.mime.text import MIMEText
+
+    smtp_user = os.environ.get("SMTP_EMAIL", "siddharthnavnath7@gmail.com")
+    smtp_pass = os.environ.get("SMTP_PASSWORD", "")  # Gmail App Password
+    if not smtp_pass:
+        log.info(f"SMTP not configured — skipping welcome email to {email}")
+        return
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["From"] = f"Yatri AI <{smtp_user}>"
+        msg["To"] = email
+        msg["Subject"] = "Welcome to Yatri AI — Nashik Kumbh Mela 2027"
+
+        html = f"""
+        <div style="font-family:'Segoe UI',sans-serif;max-width:500px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #f0e0d0">
+          <div style="background:linear-gradient(135deg,#6B0F1A,#E8652B);padding:30px;text-align:center">
+            <h1 style="color:white;font-size:28px;margin:0">Yatri AI</h1>
+            <p style="color:#F0C75E;font-size:14px;margin:4px 0 0">Nashik Kumbh Mela 2027</p>
+          </div>
+          <div style="padding:24px 30px">
+            <h2 style="color:#1a1a2e;font-size:20px">Namaste, {name}!</h2>
+            <p style="color:#4A4A6A;font-size:14px;line-height:1.7">
+              Welcome to Yatri AI — your multilingual AI companion for Nashik Kumbh Mela 2027.
+            </p>
+            <p style="color:#4A4A6A;font-size:14px;line-height:1.7">With Yatri AI you can:</p>
+            <ul style="color:#4A4A6A;font-size:14px;line-height:2">
+              <li>Ask questions in Hindi, Marathi, English & 5 more languages</li>
+              <li>Navigate 178+ Nashik locations on the map</li>
+              <li>Get instant emergency help with one tap</li>
+              <li>Explore temples, ghats, food spots & wineries</li>
+            </ul>
+            <div style="text-align:center;margin:20px 0">
+              <a href="https://siddharthnavnath7-yatri-ai.hf.space" style="background:#E8652B;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">Open Yatri AI</a>
+            </div>
+            <p style="color:#8888A8;font-size:12px;text-align:center">Har Har Mahadev</p>
+          </div>
+        </div>
+        """
+
+        msg.attach(MIMEText(html, "html"))
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_user, email, msg.as_string())
+        log.info(f"Welcome email sent to {email}")
+    except Exception as e:
+        log.warning(f"Failed to send welcome email to {email}: {e}")
 
 
 @router.post("/login", response_model=AuthResponse)
