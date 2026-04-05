@@ -1231,27 +1231,26 @@ body {
 
   .mobile-nav {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-    background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.97); backdrop-filter: blur(12px);
     display: flex; justify-content: space-around;
-    padding: 6px 0 max(env(safe-area-inset-bottom, 6px), 6px);
-    box-shadow: 0 -4px 24px rgba(0,0,0,0.06);
+    padding: 4px 0 max(env(safe-area-inset-bottom, 4px), 4px);
+    box-shadow: 0 -2px 16px rgba(0,0,0,0.06);
     border-top: 1px solid rgba(0,0,0,0.04);
-    animation: slideUp 0.3s ease;
+    height: 52px;
   }
   .mobile-nav button {
-    display: flex; flex-direction: column; align-items: center; gap: 1px;
-    background: none; border: none; cursor: pointer; padding: 4px 8px;
-    color: var(--ink-muted); font-size: 9px; font-weight: 600;
-    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex; flex-direction: column; align-items: center; gap: 0px;
+    background: none; border: none; cursor: pointer; padding: 2px 6px;
+    color: var(--ink-muted); font-size: 8px; font-weight: 600;
+    transition: all 0.2s ease;
     position: relative;
   }
-  .mobile-nav button i { font-size: 20px; transition: all 0.25s ease; }
+  .mobile-nav button i { font-size: 18px; }
+  .mobile-nav button span { line-height: 1.1; }
   .mobile-nav button.active { color: var(--saffron); }
-  .mobile-nav button.active i { transform: scale(1.15); }
   .mobile-nav button.active::after {
-    content: ''; position: absolute; top: -6px; left: 50%; transform: translateX(-50%);
-    width: 20px; height: 3px; border-radius: 2px; background: var(--saffron);
-    animation: scaleIn 0.3s ease;
+    content: ''; position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
+    width: 16px; height: 2.5px; border-radius: 2px; background: var(--saffron);
   }
 
   /* Hero */
@@ -1275,13 +1274,30 @@ body {
   .info-banner h3 { font-size: 14px; }
   .info-banner .info-row { font-size: 12px; }
 
+  /* Navbar compact */
+  .navbar { height: 48px; }
+  .nav-logo { width: 32px; height: 32px; }
+  .nav-logo img { width: 24px; height: 24px; border-radius: 6px; }
+  .nav-brand { gap: 8px; }
+
   /* Chat — fix overlaps */
   .chat-page { padding-top: 0; }
-  .chat-header { padding: 10px 14px; position: sticky; top: 0; z-index: 10; background: white; }
-  .chat-header h2 { font-size: 14px; }
-  .chat-messages { padding: 14px 10px 160px; gap: 10px; } /* extra bottom for input + nav */
-  .chat-input-bar { position: fixed; bottom: 58px; left: 0; right: 0; z-index: 10; background: white; border-top: 1px solid rgba(0,0,0,0.06); }
-  .typing-indicator { margin-bottom: 120px; }
+  .chat-header { padding: 8px 12px; position: sticky; top: 0; z-index: 10; background: white; }
+  .chat-header h2 { font-size: 13px; }
+  .chat-header .sub { font-size: 9px; }
+  .chat-avatar { width: 30px; height: 30px; border-radius: 8px; font-size: 13px; }
+  .chat-sidebar-toggle { font-size: 16px; }
+  .chat-messages { padding: 10px 8px 140px; gap: 8px; }
+  .chat-input-bar {
+    position: fixed; bottom: 52px; left: 0; right: 0; z-index: 10;
+    background: rgba(255,255,255,0.97); backdrop-filter: blur(8px);
+    padding: 6px 8px; gap: 5px;
+  }
+  .chat-input { padding: 9px 12px; font-size: 13px; }
+  .btn-mic { width: 44px; height: 44px; font-size: 20px; }
+  .btn-mic::after { inset: -2px; }
+  .btn-send { width: 34px; height: 34px; font-size: 15px; border-radius: 10px; }
+  .typing-indicator { margin-bottom: 100px; }
   .msg { max-width: 90%; }
   .msg-bubble { padding: 10px 14px; font-size: 13.5px; border-radius: 16px; }
   .msg-bot::before { width: 22px; height: 22px; border-radius: 7px; background-size: 11px; }
@@ -1317,18 +1333,26 @@ body {
   .places-list { padding: 0 14px 80px; }
 
   /* Map */
-  .map-header { padding: 8px 8px; }
-  .map-search { padding: 10px 14px 10px 36px; font-size: 13px; border-radius: 12px; }
-  .map-search-icon { left: 20px; }
-  .map-btn { width: 38px; height: 38px; font-size: 16px; border-radius: 10px; }
-  .map-place-card { left: 8px; right: 8px; bottom: 66px; padding: 12px; border-radius: 16px; }
+  .map-header { padding: 8px 8px; gap: 4px; }
+  .map-search { padding: 8px 10px 8px 32px; font-size: 12px; border-radius: 10px; min-width: 0; }
+  .map-search-icon { left: 18px; font-size: 14px; }
+  .map-btn { width: 34px; height: 34px; font-size: 14px; border-radius: 8px; flex-shrink: 0; }
+  .map-place-card { left: 8px; right: 8px; bottom: 60px; padding: 12px; border-radius: 14px; }
   .map-place-card h3 { font-size: 14px; }
-  .map-place-card p { font-size: 12px; }
-  .mpc-btn { padding: 8px; font-size: 12px; }
+  .map-place-card p { font-size: 11px; line-height: 1.5; }
+  .mpc-btn { padding: 8px; font-size: 11px; }
+  .mpc-actions { gap: 6px; }
   .map-legend { display: none; }
-  .route-panel { width: calc(100vw - 16px); left: 8px; padding: 12px; max-height: 60vh; }
-  .route-input { font-size: 12px; padding: 8px 10px; }
-  .route-go-btn { padding: 10px; font-size: 13px; }
+  .map-filters { top: 50px; left: 8px; right: 8px; gap: 4px; }
+  .map-filter-chip { padding: 4px 10px; font-size: 10px; }
+  .route-panel { width: calc(100vw - 16px); left: 8px; padding: 12px; max-height: 55vh; }
+  .route-panel-header span { font-size: 13px; }
+  .route-fields { gap: 6px; }
+  .route-input { font-size: 11px; padding: 8px 10px; }
+  .route-go-btn { padding: 9px; font-size: 12px; }
+  .route-swap { width: 28px; height: 28px; font-size: 14px; }
+  .route-picker { width: calc(100vw - 16px); left: 8px; }
+  .route-picker-search { padding: 12px 14px; font-size: 13px; }
 
   /* Auth */
   .auth-card { padding: 24px 20px; }
@@ -1344,24 +1368,23 @@ body {
   .profile-stat .num { font-size: 18px; }
   .profile-section { padding: 16px 14px; }
 
-  /* Fix page layout under fixed navbar */
-  .app { padding-top: 0; }
-  .page { min-height: calc(100dvh - 56px - 58px); } /* minus navbar minus bottom nav */
-  .page.active { overflow-y: auto; }
+  /* Fix page layout — navbar 48px, bottom nav 52px */
+  .page.active { overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
-  /* Chat page special — full height between navbar and bottom nav */
-  #page-assistant { height: calc(100dvh - 56px); overflow: hidden; }
+  /* Chat page — full height */
+  #page-assistant { height: calc(100dvh - 48px); overflow: hidden; }
   #page-assistant .chat-page { height: 100%; display: flex; flex-direction: column; }
-  #page-assistant .chat-messages { flex: 1; overflow-y: auto; }
+  #page-assistant .chat-messages { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 
-  /* Map page — fill available space */
-  #page-map .map-page { height: calc(100dvh - 56px - 58px); }
+  /* Map page */
+  #page-map .map-page { height: calc(100dvh - 48px - 52px); }
+  #mapContainer { height: 100% !important; }
 
   /* Bottom padding for scrollable pages */
-  #page-home { padding-bottom: 68px; }
-  #page-explore { padding-bottom: 68px; }
-  #page-emergency { padding-bottom: 68px; }
-  #page-profile { padding-bottom: 68px; }
+  #page-home { padding-bottom: 60px; }
+  #page-explore { padding-bottom: 60px; }
+  #page-emergency { padding-bottom: 60px; }
+  #page-profile { padding-bottom: 60px; }
 }
 
 /* Tablets */
@@ -2740,14 +2763,17 @@ const MAP_CATS = [
 function createMarkerIcon(cat) {
   const color = getCatColor(cat);
   const icon = getCatIcon(cat);
+  const isMobile = window.innerWidth < 768;
+  const s = isMobile ? 32 : 36;
+  const fs = isMobile ? 14 : 16;
   return L.divIcon({
     className: '',
-    html: `<div style="width:36px;height:36px;border-radius:50% 50% 50% 0;background:${color};transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px ${color}66;border:2px solid white">
-      <i class="${icon}" style="transform:rotate(45deg);color:white;font-size:16px"></i>
+    html: `<div style="width:${s}px;height:${s}px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px ${color}88;border:2.5px solid white">
+      <i class="${icon}" style="color:white;font-size:${fs}px"></i>
     </div>`,
-    iconSize: [36, 36],
-    iconAnchor: [18, 36],
-    popupAnchor: [0, -36],
+    iconSize: [s, s],
+    iconAnchor: [s/2, s/2],
+    popupAnchor: [0, -s/2],
   });
 }
 
