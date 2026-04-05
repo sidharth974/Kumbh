@@ -252,6 +252,7 @@ body {
   display: none; background: white; border-bottom: 1px solid rgba(0,0,0,0.04);
   padding: 10px 24px; gap: 6px; flex-wrap: wrap;
   animation: fadeIn 0.2s ease;
+  position: sticky; top: 0; z-index: 9;
 }
 .lang-dropdown.open { display: flex; }
 .lang-chip {
@@ -1274,10 +1275,13 @@ body {
   .info-banner h3 { font-size: 14px; }
   .info-banner .info-row { font-size: 12px; }
 
-  /* Chat */
-  .chat-header { padding: 10px 14px; }
+  /* Chat — fix overlaps */
+  .chat-page { padding-top: 0; }
+  .chat-header { padding: 10px 14px; position: sticky; top: 0; z-index: 10; background: white; }
   .chat-header h2 { font-size: 14px; }
-  .chat-messages { padding: 14px 10px 80px; gap: 10px; }
+  .chat-messages { padding: 14px 10px 160px; gap: 10px; } /* extra bottom for input + nav */
+  .chat-input-bar { position: fixed; bottom: 58px; left: 0; right: 0; z-index: 10; background: white; border-top: 1px solid rgba(0,0,0,0.06); }
+  .typing-indicator { margin-bottom: 120px; }
   .msg { max-width: 90%; }
   .msg-bubble { padding: 10px 14px; font-size: 13.5px; border-radius: 16px; }
   .msg-bot::before { width: 22px; height: 22px; border-radius: 7px; background-size: 11px; }
@@ -1313,13 +1317,18 @@ body {
   .places-list { padding: 0 14px 80px; }
 
   /* Map */
-  .map-header { padding: 10px 10px; }
-  .map-search { padding: 10px 14px 10px 36px; font-size: 13px; }
-  .map-search-icon { left: 22px; }
-  .map-btn { width: 40px; height: 40px; font-size: 18px; }
-  .map-place-card { left: 10px; right: 10px; bottom: 70px; padding: 14px; }
+  .map-header { padding: 8px 8px; }
+  .map-search { padding: 10px 14px 10px 36px; font-size: 13px; border-radius: 12px; }
+  .map-search-icon { left: 20px; }
+  .map-btn { width: 38px; height: 38px; font-size: 16px; border-radius: 10px; }
+  .map-place-card { left: 8px; right: 8px; bottom: 66px; padding: 12px; border-radius: 16px; }
+  .map-place-card h3 { font-size: 14px; }
+  .map-place-card p { font-size: 12px; }
+  .mpc-btn { padding: 8px; font-size: 12px; }
   .map-legend { display: none; }
-  .route-panel { width: calc(100vw - 20px); left: 10px; padding: 14px; }
+  .route-panel { width: calc(100vw - 16px); left: 8px; padding: 12px; max-height: 60vh; }
+  .route-input { font-size: 12px; padding: 8px 10px; }
+  .route-go-btn { padding: 10px; font-size: 13px; }
 
   /* Auth */
   .auth-card { padding: 24px 20px; }
@@ -1335,8 +1344,24 @@ body {
   .profile-stat .num { font-size: 18px; }
   .profile-section { padding: 16px 14px; }
 
-  /* Bottom padding for all scrollable pages */
-  .page > *:last-child { padding-bottom: 72px; }
+  /* Fix page layout under fixed navbar */
+  .app { padding-top: 0; }
+  .page { min-height: calc(100dvh - 56px - 58px); } /* minus navbar minus bottom nav */
+  .page.active { overflow-y: auto; }
+
+  /* Chat page special — full height between navbar and bottom nav */
+  #page-assistant { height: calc(100dvh - 56px); overflow: hidden; }
+  #page-assistant .chat-page { height: 100%; display: flex; flex-direction: column; }
+  #page-assistant .chat-messages { flex: 1; overflow-y: auto; }
+
+  /* Map page — fill available space */
+  #page-map .map-page { height: calc(100dvh - 56px - 58px); }
+
+  /* Bottom padding for scrollable pages */
+  #page-home { padding-bottom: 68px; }
+  #page-explore { padding-bottom: 68px; }
+  #page-emergency { padding-bottom: 68px; }
+  #page-profile { padding-bottom: 68px; }
 }
 
 /* Tablets */
