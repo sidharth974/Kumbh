@@ -181,8 +181,8 @@ class RAGService:
 _rag_instance: Optional[RAGService] = None
 
 
-def get_rag() -> RAGService:
+def get_rag(force_reload: bool = False) -> RAGService:
     global _rag_instance
-    if _rag_instance is None:
+    if _rag_instance is None or force_reload:
         _rag_instance = RAGService()
     return _rag_instance

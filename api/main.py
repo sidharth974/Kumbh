@@ -58,7 +58,14 @@ async def lifespan(app: FastAPI):
     log.info("Initializing database...")
     await db.init_db()
     log.info("Loading RAG / ChromaDB...")
-    get_rag()
+    # Auto-build ChromaDB if empty (first deploy / fresh clone)
+    rag = get_rag()
+    if rag.doc_count() == 0:
+        log.info("ChromaDB is empty — building from knowledge base (one-time)...")
+        import subprocess, sys
+        subprocess.run([sys.executable, "vectordb/ingest_chunks.py"], cwd=str(Path(__file__).parent.parent))
+        log.info("ChromaDB built. Reloading...")
+        rag = get_rag(force_reload=True)
     log.info("Loading LLM...")
     get_llm()
     log.info("Loading Whisper ASR...")
