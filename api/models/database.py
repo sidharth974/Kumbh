@@ -41,6 +41,7 @@ class Database:
                     response_text TEXT,
                     language TEXT,
                     query_type TEXT CHECK(query_type IN ('voice', 'text', 'emergency')),
+                    conversation_id TEXT,
                     created_at TEXT NOT NULL,
                     FOREIGN KEY (user_id) REFERENCES users(id)
                 );
@@ -63,7 +64,18 @@ class Database:
                     created_at TEXT NOT NULL
                 );
 
+                CREATE TABLE IF NOT EXISTS conversations (
+                    id TEXT PRIMARY KEY,
+                    user_id TEXT NOT NULL,
+                    title TEXT DEFAULT 'New Chat',
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (user_id) REFERENCES users(id)
+                );
+
                 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+                CREATE INDEX IF NOT EXISTS idx_sessions_conv ON sessions(conversation_id);
+                CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id);
                 CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(user_id);
                 CREATE INDEX IF NOT EXISTS idx_emergency_user ON emergency_logs(user_id);
             """)

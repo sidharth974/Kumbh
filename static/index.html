@@ -3,629 +3,3492 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Kumbh Mela 2027 AI Assistant</title>
+<title>Yatri AI — Nashik Kumbh Mela 2027</title>
+<link rel="manifest" href="/static/manifest.json">
+<meta name="theme-color" content="#6B0F1A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Yatri AI">
+<link rel="apple-touch-icon" href="/static/icon-192.png">
+<link rel="icon" type="image/png" href="/static/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
 <style>
-  :root {
-    --primary: #e65100;
-    --primary-light: #ff833a;
-    --primary-dark: #ac1900;
-    --bg: #fff8f0;
-    --card: #ffffff;
-    --text: #1a1a1a;
-    --text-light: #666;
-    --user-bubble: #fff3e0;
-    --bot-bubble: #ffffff;
-    --danger: #d32f2f;
-    --success: #2e7d32;
-  }
+:root {
+  --saffron: #E8652B;
+  --saffron-light: #F4845F;
+  --saffron-dark: #C44B1A;
+  --gold: #D4A017;
+  --gold-light: #F0C75E;
+  --gold-dark: #B8860B;
+  --maroon: #6B0F1A;
+  --maroon-light: #8B1A2B;
+  --deepblue: #1B1464;
+  --river: #2E86AB;
+  --river-light: #A3D5FF;
+  --cream: #FFF8F0;
+  --cream-dark: #F5EDE0;
+  --ink: #1A1A2E;
+  --ink-light: #4A4A6A;
+  --ink-muted: #8888A8;
+  --white: #FFFFFF;
+  --glass: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --shadow-soft: 0 4px 30px rgba(0, 0, 0, 0.08);
+  --shadow-glow: 0 8px 40px rgba(232, 101, 43, 0.25);
+  --radius: 16px;
+  --radius-lg: 24px;
+  --radius-full: 9999px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+body {
+  font-family: 'Poppins', 'Noto Sans Devanagari', sans-serif;
+  background: var(--cream);
+  color: var(--ink);
+  overflow-x: hidden;
+  min-height: 100dvh;
+}
 
-  /* Header */
-  header {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: white;
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    z-index: 10;
-  }
-  header h1 { font-size: 18px; font-weight: 600; }
-  header .subtitle { font-size: 11px; opacity: 0.85; margin-top: 2px; }
-  .header-left { display: flex; align-items: center; gap: 10px; }
-  .header-left .icon { font-size: 28px; }
+/* ═══════════════════ SCROLLBAR ═══════════════════ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--saffron-light); border-radius: 3px; }
 
-  /* Language selector */
-  .lang-select {
-    background: rgba(255,255,255,0.2);
-    color: white;
-    border: 1px solid rgba(255,255,255,0.3);
-    border-radius: 8px;
-    padding: 6px 10px;
-    font-size: 13px;
-    cursor: pointer;
-    outline: none;
-  }
-  .lang-select option { color: #333; background: white; }
+/* ═══════════════════ ANIMATIONS ═══════════════════ */
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes pulse-ring { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.8); opacity: 0; } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes wave { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-10px); } }
+@keyframes glow { 0%, 100% { box-shadow: 0 0 20px rgba(232, 101, 43, 0.3); } 50% { box-shadow: 0 0 40px rgba(232, 101, 43, 0.6); } }
+@keyframes ripple { 0% { width: 0; height: 0; opacity: 0.5; } 100% { width: 500px; height: 500px; opacity: 0; } }
+@keyframes typing { 0% { width: 0; } 100% { width: 24px; } }
 
-  /* Chat area */
-  .chat-container {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    scroll-behavior: smooth;
-  }
+.animate-in { animation: fadeInUp 0.6s ease forwards; }
+.animate-delay-1 { animation-delay: 0.1s; opacity: 0; }
+.animate-delay-2 { animation-delay: 0.2s; opacity: 0; }
+.animate-delay-3 { animation-delay: 0.3s; opacity: 0; }
+.animate-delay-4 { animation-delay: 0.4s; opacity: 0; }
 
-  .message {
-    max-width: 85%;
-    padding: 12px 16px;
-    border-radius: 16px;
-    font-size: 15px;
-    line-height: 1.5;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    animation: fadeIn 0.3s ease;
-  }
+/* ═══════════════════ LAYOUT ═══════════════════ */
+.app { display: flex; flex-direction: column; min-height: 100dvh; }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+/* ═══════════════════ NAVBAR ═══════════════════ */
+.navbar {
+  position: sticky; top: 0; z-index: 100;
+  background: linear-gradient(135deg, var(--maroon), var(--saffron-dark));
+  padding: 0 24px; height: 64px;
+  display: flex; align-items: center; justify-content: space-between;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 2px 20px rgba(107, 15, 26, 0.3);
+}
+.nav-brand { display: flex; align-items: center; gap: 12px; }
+.nav-logo {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; color: var(--maroon);
+  box-shadow: 0 2px 12px rgba(212, 160, 23, 0.4);
+}
+.nav-title { color: white; font-weight: 700; font-size: 18px; letter-spacing: -0.3px; }
+.nav-subtitle { color: rgba(255,255,255,0.65); font-size: 11px; font-weight: 400; }
 
-  .message.user {
-    align-self: flex-end;
-    background: var(--user-bubble);
-    border: 1px solid #ffe0b2;
-    border-bottom-right-radius: 4px;
-  }
-  .message.bot {
-    align-self: flex-start;
-    background: var(--bot-bubble);
-    border: 1px solid #eee;
-    border-bottom-left-radius: 4px;
-  }
-  .message .lang-tag {
-    font-size: 10px;
-    color: var(--text-light);
-    margin-bottom: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .message .audio-play {
-    margin-top: 8px;
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-size: 12px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .message .audio-play:hover { background: var(--primary-dark); }
+.nav-links { display: flex; gap: 4px; }
+.nav-link {
+  padding: 8px 16px; border-radius: var(--radius-full);
+  color: rgba(255,255,255,0.75); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: var(--transition);
+  display: flex; align-items: center; gap: 6px; border: none; background: none;
+  text-decoration: none;
+}
+.nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.15); color: white; }
+.nav-link i { font-size: 16px; }
 
-  .message.system {
-    align-self: center;
-    background: #f5f5f5;
-    color: var(--text-light);
-    font-size: 13px;
-    border: none;
-    max-width: 90%;
-    text-align: center;
-  }
+.nav-status {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.1); padding: 6px 14px;
+  border-radius: var(--radius-full); font-size: 12px; color: rgba(255,255,255,0.7);
+}
+.status-dot { width: 7px; height: 7px; border-radius: 50%; }
+.status-dot.online { background: #4ADE80; box-shadow: 0 0 8px rgba(74, 222, 128, 0.5); }
+.status-dot.offline { background: #F87171; }
 
-  .typing-indicator {
-    align-self: flex-start;
-    background: var(--bot-bubble);
-    border: 1px solid #eee;
-    padding: 12px 20px;
-    border-radius: 16px;
-    border-bottom-left-radius: 4px;
-    display: none;
-  }
-  .typing-indicator span {
-    display: inline-block;
-    width: 8px; height: 8px;
-    background: #ccc;
-    border-radius: 50%;
-    margin: 0 2px;
-    animation: bounce 1.4s infinite;
-  }
-  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes bounce {
-    0%, 60%, 100% { transform: translateY(0); }
-    30% { transform: translateY(-8px); }
-  }
+/* ═══════════════════ PAGES ═══════════════════ */
+.page { display: none; flex: 1; }
+.page.active { display: flex; flex-direction: column; }
 
-  /* Bottom controls */
-  .controls {
-    background: var(--card);
-    border-top: 1px solid #e0e0e0;
-    padding: 12px 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    z-index: 10;
-  }
+/* ═══════════════════ HERO / HOME ═══════════════════ */
+.hero {
+  position: relative; overflow: hidden;
+  background: linear-gradient(160deg, var(--maroon) 0%, var(--saffron-dark) 40%, var(--saffron) 70%, var(--gold) 100%);
+  padding: 60px 24px 80px; text-align: center;
+  min-height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.hero::before {
+  content: ''; position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+}
+.hero-content { position: relative; z-index: 2; max-width: 640px; }
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 6px 16px; border-radius: var(--radius-full);
+  font-size: 12px; color: rgba(255,255,255,0.9); margin-bottom: 20px;
+  animation: fadeIn 0.8s ease;
+}
+.hero h1 {
+  font-size: clamp(32px, 6vw, 52px); font-weight: 800;
+  color: white; line-height: 1.1; margin-bottom: 12px;
+  animation: fadeInUp 0.8s ease;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.2);
+}
+.hero h1 span { color: var(--gold-light); }
+.hero p {
+  font-size: 16px; color: rgba(255,255,255,0.8); max-width: 480px;
+  margin: 0 auto 28px; line-height: 1.6;
+  animation: fadeInUp 0.8s ease 0.2s forwards; opacity: 0;
+}
+.hero-cta {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: white; color: var(--saffron-dark); padding: 14px 32px;
+  border-radius: var(--radius-full); font-weight: 700; font-size: 16px;
+  cursor: pointer; border: none; transition: var(--transition);
+  box-shadow: var(--shadow-glow);
+  animation: fadeInUp 0.8s ease 0.4s forwards; opacity: 0;
+}
+.hero-cta:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(232, 101, 43, 0.4); }
+.hero-cta i { font-size: 20px; }
 
-  .text-input {
-    flex: 1;
-    border: 1.5px solid #ddd;
-    border-radius: 24px;
-    padding: 10px 16px;
-    font-size: 15px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .text-input:focus { border-color: var(--primary); }
+/* Wave divider */
+.wave-divider {
+  position: absolute; bottom: -2px; left: 0; width: 100%; overflow: hidden; line-height: 0;
+}
+.wave-divider svg { position: relative; display: block; width: calc(100% + 1.3px); height: 60px; }
+.wave-divider svg path { fill: var(--cream); }
 
-  .mic-btn {
-    width: 56px; height: 56px;
-    border-radius: 50%;
-    border: none;
-    background: var(--primary);
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    flex-shrink: 0;
-    position: relative;
-  }
-  .mic-btn:hover { background: var(--primary-dark); transform: scale(1.05); }
-  .mic-btn.recording {
-    background: var(--danger);
-    animation: pulse 1.5s infinite;
-  }
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(211,47,47,0.4); }
-    70% { box-shadow: 0 0 0 15px rgba(211,47,47,0); }
-    100% { box-shadow: 0 0 0 0 rgba(211,47,47,0); }
-  }
-  .mic-btn:disabled { background: #ccc; cursor: not-allowed; animation: none; }
+/* Floating elements */
+.hero-float {
+  position: absolute; opacity: 0.12; font-size: 40px;
+  animation: float 4s ease-in-out infinite;
+}
+.hero-float:nth-child(1) { top: 15%; left: 8%; animation-delay: 0s; }
+.hero-float:nth-child(2) { top: 25%; right: 10%; animation-delay: 1s; }
+.hero-float:nth-child(3) { bottom: 25%; left: 12%; animation-delay: 2s; }
+.hero-float:nth-child(4) { bottom: 30%; right: 8%; animation-delay: 0.5s; }
 
-  .send-btn {
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    border: none;
-    background: var(--primary);
-    color: white;
-    font-size: 18px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-  .send-btn:hover { background: var(--primary-dark); }
-  .send-btn:disabled { background: #ccc; cursor: not-allowed; }
+/* ═══════════════════ QUICK ACTIONS ═══════════════════ */
+.section { padding: 40px 24px; max-width: 1200px; margin: 0 auto; width: 100%; }
+.section-title {
+  font-size: 22px; font-weight: 700; color: var(--ink);
+  margin-bottom: 20px; display: flex; align-items: center; gap: 10px;
+}
+.section-title i { color: var(--saffron); font-size: 24px; }
 
-  /* Emergency bar */
-  .emergency-bar {
-    background: #ffebee;
-    border-top: 1px solid #ffcdd2;
-    padding: 8px 16px;
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    z-index: 10;
-  }
-  .emergency-bar button {
-    background: white;
-    border: 1px solid #ef9a9a;
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-size: 12px;
-    white-space: nowrap;
-    cursor: pointer;
-    color: var(--danger);
-    font-weight: 500;
-  }
-  .emergency-bar button:hover { background: #ffcdd2; }
+.actions-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+.action-card {
+  background: white; border-radius: var(--radius-lg); padding: 24px 16px;
+  text-align: center; cursor: pointer; transition: var(--transition);
+  border: 1px solid rgba(0,0,0,0.04);
+  box-shadow: var(--shadow-soft);
+  position: relative; overflow: hidden;
+}
+.action-card::after {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--saffron), var(--gold));
+  transform: scaleX(0); transition: transform 0.3s ease; transform-origin: left;
+}
+.action-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
+.action-card:hover::after { transform: scaleX(1); }
+.action-icon {
+  width: 52px; height: 52px; border-radius: 16px; margin: 0 auto 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: white;
+}
+.action-card h3 { font-size: 13px; font-weight: 600; color: var(--ink); }
+.action-card p { font-size: 11px; color: var(--ink-muted); margin-top: 4px; }
 
-  /* Status bar */
-  .status-bar {
-    text-align: center;
-    font-size: 11px;
-    color: var(--text-light);
-    padding: 4px;
-    background: #fafafa;
-  }
-  .status-bar .dot {
-    display: inline-block;
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    margin-right: 4px;
-    vertical-align: middle;
-  }
-  .dot.online { background: var(--success); }
-  .dot.offline { background: var(--danger); }
+/* ═══════════════════ ASSISTANT PAGE ═══════════════════ */
+.chat-page { flex: 1; display: flex; flex-direction: column; background: var(--cream); }
 
-  /* Welcome screen */
-  .welcome {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    text-align: center;
-    gap: 12px;
-    opacity: 0.8;
-  }
-  .welcome .big-icon { font-size: 64px; }
-  .welcome h2 { font-size: 20px; color: var(--primary-dark); }
-  .welcome p { font-size: 14px; color: var(--text-light); max-width: 300px; }
+.chat-header {
+  background: white; border-bottom: 1px solid rgba(0,0,0,0.06);
+  padding: 12px 24px; display: flex; align-items: center; justify-content: space-between;
+}
+.chat-header-left { display: flex; align-items: center; gap: 10px; }
+.chat-avatar {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--saffron), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 16px;
+}
+.chat-header h2 { font-size: 15px; font-weight: 600; }
+.chat-header .sub { font-size: 11px; color: var(--ink-muted); }
 
-  /* Mobile tweaks */
-  @media (max-width: 480px) {
-    header h1 { font-size: 16px; }
-    .message { max-width: 90%; font-size: 14px; }
-    .text-input { font-size: 14px; padding: 8px 14px; }
+/* ═══════════════════ ASSISTANT — PREMIUM UI ═══════════════════ */
+.lang-picker-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--cream); border: 1px solid rgba(0,0,0,0.06);
+  padding: 6px 14px; border-radius: var(--radius-full);
+  font-size: 12px; font-weight: 600; cursor: pointer; color: var(--ink-light);
+  transition: var(--transition); backdrop-filter: blur(8px);
+}
+.lang-picker-btn:hover { background: var(--cream-dark); border-color: var(--saffron-light); }
+
+.lang-dropdown {
+  display: none; background: white; border-bottom: 1px solid rgba(0,0,0,0.04);
+  padding: 10px 24px; gap: 6px; flex-wrap: wrap;
+  animation: fadeIn 0.2s ease;
+}
+.lang-dropdown.open { display: flex; }
+.lang-chip {
+  padding: 6px 16px; border-radius: var(--radius-full);
+  border: 1.5px solid rgba(0,0,0,0.06); font-size: 12px;
+  cursor: pointer; transition: all 0.2s ease; background: white;
+  font-weight: 500;
+}
+.lang-chip:hover { border-color: var(--saffron); transform: translateY(-1px); }
+.lang-chip.active {
+  background: linear-gradient(135deg, var(--saffron), var(--saffron-dark));
+  color: white; border-color: transparent;
+  box-shadow: 0 2px 12px rgba(232, 101, 43, 0.25);
+}
+
+/* Chat area */
+.chat-messages {
+  flex: 1; overflow-y: auto; padding: 20px 24px;
+  display: flex; flex-direction: column; gap: 14px;
+  max-width: 900px; width: 100%; margin: 0 auto;
+  scroll-behavior: smooth;
+  /* Subtle bg pattern */
+  background-image: radial-gradient(circle at 20% 50%, rgba(232,101,43,0.02) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(46,134,171,0.02) 0%, transparent 50%);
+}
+
+/* Messages */
+.msg {
+  max-width: 82%; opacity: 0; animation: msgAppear 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.msg-user { align-self: flex-end; animation-name: msgAppearRight; }
+.msg-bot { align-self: flex-start; }
+.msg-system { align-self: center; max-width: 90%; animation-name: fadeIn; }
+
+@keyframes msgAppear {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes msgAppearRight {
+  from { opacity: 0; transform: translateY(12px) translateX(12px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) translateX(0) scale(1); }
+}
+
+.msg-bubble {
+  padding: 14px 18px; font-size: 14.5px; line-height: 1.65;
+  border-radius: 20px; word-wrap: break-word;
+  position: relative;
+}
+
+/* User bubble — gradient with shine */
+.msg-user .msg-bubble {
+  background: linear-gradient(135deg, var(--saffron), var(--saffron-dark));
+  color: white; border-bottom-right-radius: 6px;
+  box-shadow: 0 4px 16px rgba(232, 101, 43, 0.2);
+}
+.msg-user .msg-bubble::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+/* Bot bubble — glass card */
+.msg-bot .msg-bubble {
+  background: white; color: var(--ink);
+  border: 1px solid rgba(0,0,0,0.05);
+  border-bottom-left-radius: 6px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04), 0 0 0 1px rgba(0,0,0,0.02);
+}
+
+/* Bot avatar */
+.msg-bot { display: flex; gap: 10px; align-items: flex-end; }
+.msg-bot::before {
+  content: ''; flex-shrink: 0;
+  width: 28px; height: 28px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--saffron), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: center; background-size: 14px;
+}
+
+.msg-system .msg-bubble {
+  background: rgba(0,0,0,0.03); color: var(--ink-muted);
+  font-size: 13px; text-align: center; border-radius: 12px;
+  padding: 10px 20px; border: 1px dashed rgba(0,0,0,0.08);
+}
+
+.msg-lang {
+  font-size: 9px; color: var(--saffron); margin-bottom: 3px;
+  text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700;
+}
+
+/* Play button */
+.msg-play {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-top: 10px; padding: 6px 14px; border-radius: var(--radius-full);
+  background: linear-gradient(135deg, rgba(232,101,43,0.08), rgba(232,101,43,0.04));
+  color: var(--saffron-dark); font-size: 12px; font-weight: 600;
+  cursor: pointer; border: 1px solid rgba(232,101,43,0.12);
+  transition: all 0.25s ease;
+}
+.msg-play:hover {
+  background: linear-gradient(135deg, rgba(232,101,43,0.15), rgba(232,101,43,0.08));
+  transform: translateY(-1px); box-shadow: 0 4px 12px rgba(232,101,43,0.12);
+}
+
+/* Map/emergency action buttons in chat */
+.msg-map-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 6px; margin-right: 4px; padding: 5px 13px;
+  border-radius: var(--radius-full);
+  background: rgba(46, 134, 171, 0.06); color: var(--river);
+  font-size: 11.5px; font-weight: 600; cursor: pointer;
+  border: 1px solid rgba(46,134,171,0.1);
+  transition: all 0.25s ease;
+}
+.msg-map-btn:hover {
+  background: rgba(46, 134, 171, 0.12);
+  transform: translateY(-1px); box-shadow: 0 3px 10px rgba(46,134,171,0.1);
+}
+
+/* Typing indicator — premium */
+.typing-indicator {
+  display: none; align-self: flex-start;
+  margin-left: 38px; /* align with bot messages */
+  background: white; border: 1px solid rgba(0,0,0,0.05);
+  padding: 16px 22px; border-radius: 20px; border-bottom-left-radius: 6px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  animation: fadeIn 0.3s ease;
+}
+.typing-dots { display: flex; gap: 5px; align-items: center; }
+.typing-dots span {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--saffron-light), var(--saffron));
+  animation: typingPulse 1.4s infinite;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typingPulse {
+  0%, 60%, 100% { transform: translateY(0) scale(1); opacity: 0.4; }
+  30% { transform: translateY(-8px) scale(1.1); opacity: 1; }
+}
+
+/* Input bar — floating glass */
+.chat-input-bar {
+  background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(0,0,0,0.04);
+  padding: 12px 20px; display: flex; align-items: center; gap: 8px;
+  max-width: 900px; width: 100%; margin: 0 auto;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.03);
+}
+.chat-input {
+  flex: 1; border: 2px solid rgba(0,0,0,0.06); border-radius: var(--radius-full);
+  padding: 12px 20px; font-size: 14px; font-family: inherit;
+  transition: all 0.3s ease; outline: none; background: var(--cream);
+  color: var(--ink);
+}
+.chat-input:focus {
+  border-color: var(--saffron); background: white;
+  box-shadow: 0 0 0 4px rgba(232, 101, 43, 0.08);
+}
+.chat-input::placeholder { color: var(--ink-muted); }
+
+/* Send button */
+.btn-send {
+  width: 44px; height: 44px; border-radius: 14px;
+  background: var(--cream-dark); border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-muted); font-size: 18px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.btn-send.ready {
+  background: linear-gradient(135deg, var(--saffron), var(--saffron-dark));
+  color: white; transform: scale(1);
+  box-shadow: 0 4px 16px rgba(232, 101, 43, 0.25);
+}
+.btn-send:hover.ready { transform: scale(1.08); box-shadow: 0 6px 24px rgba(232, 101, 43, 0.3); }
+.btn-send:active.ready { transform: scale(0.95); }
+
+/* Mic button — the hero */
+.btn-mic {
+  width: 60px; height: 60px; border-radius: 50%;
+  background: linear-gradient(145deg, var(--saffron), var(--saffron-dark));
+  border: none; cursor: pointer; color: white; font-size: 26px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; flex-shrink: 0;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 6px 24px rgba(232, 101, 43, 0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+}
+.btn-mic::after {
+  content: ''; position: absolute; inset: -3px; border-radius: 50%;
+  border: 2px solid rgba(232, 101, 43, 0.15);
+  transition: all 0.3s ease;
+}
+.btn-mic:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 32px rgba(232, 101, 43, 0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.btn-mic:hover::after { border-color: rgba(232, 101, 43, 0.3); inset: -6px; }
+.btn-mic:active { transform: scale(0.95); }
+
+/* Recording state — dramatic pulse */
+.btn-mic.recording {
+  background: linear-gradient(145deg, #EF4444, #DC2626);
+  box-shadow: 0 6px 24px rgba(239, 68, 68, 0.4);
+}
+.btn-mic.recording::after {
+  border-color: rgba(239, 68, 68, 0.3);
+  animation: micRingPulse 1.5s ease-in-out infinite;
+}
+.btn-mic.recording::before {
+  content: ''; position: absolute; width: 100%; height: 100%;
+  border-radius: 50%; background: rgba(239, 68, 68, 0.15);
+  animation: micGlowPulse 1.5s ease-in-out infinite;
+}
+@keyframes micRingPulse {
+  0%, 100% { inset: -4px; opacity: 1; }
+  50% { inset: -14px; opacity: 0.4; }
+}
+@keyframes micGlowPulse {
+  0%, 100% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.6); opacity: 0; }
+}
+
+.btn-mic:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+.btn-mic:disabled::after, .btn-mic:disabled::before { display: none; }
+
+/* Welcome empty state */
+.chat-welcome {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; flex: 1; padding: 40px 24px;
+  text-align: center; animation: fadeIn 0.6s ease;
+}
+.chat-welcome-icon {
+  width: 80px; height: 80px; border-radius: 24px;
+  background: linear-gradient(135deg, var(--saffron), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; color: white; margin-bottom: 20px;
+  box-shadow: 0 8px 32px rgba(232, 101, 43, 0.2);
+  animation: float 4s ease-in-out infinite;
+}
+.chat-welcome h3 { font-size: 20px; font-weight: 700; color: var(--ink); }
+.chat-welcome p { font-size: 14px; color: var(--ink-muted); margin-top: 6px; max-width: 320px; line-height: 1.6; }
+.chat-welcome-chips {
+  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  margin-top: 20px; max-width: 400px;
+}
+.chat-welcome-chip {
+  padding: 8px 16px; border-radius: var(--radius-full);
+  background: white; border: 1.5px solid rgba(0,0,0,0.06);
+  font-size: 12px; color: var(--ink-light); cursor: pointer;
+  transition: all 0.25s ease; font-weight: 500;
+}
+.chat-welcome-chip:hover {
+  border-color: var(--saffron); color: var(--saffron);
+  transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+  .chat-input-bar { padding: 10px 12px; gap: 6px; }
+  .chat-input { padding: 10px 16px; font-size: 14px; }
+  .btn-mic { width: 52px; height: 52px; font-size: 22px; }
+  .btn-send { width: 40px; height: 40px; }
+  .msg { max-width: 88%; }
+  .msg-bot::before { width: 24px; height: 24px; border-radius: 8px; }
+  .chat-messages { padding: 16px 12px; gap: 10px; }
+}
+
+/* ═══════════════════ EMERGENCY PAGE ═══════════════════ */
+.sos-header {
+  background: linear-gradient(135deg, #DC2626, #991B1B);
+  padding: 32px 24px; text-align: center; color: white; position: relative;
+}
+.sos-header h2 { font-size: 24px; font-weight: 700; }
+.sos-header p { font-size: 14px; opacity: 0.8; margin-top: 4px; }
+
+.sos-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px; padding: 24px; max-width: 800px; margin: 0 auto;
+}
+.sos-card {
+  background: white; border-radius: var(--radius-lg); padding: 20px;
+  text-align: center; cursor: pointer; transition: var(--transition);
+  border: 2px solid transparent; box-shadow: var(--shadow-soft);
+}
+.sos-card:hover { border-color: #FCA5A5; transform: translateY(-2px); }
+.sos-card:active { transform: scale(0.97); }
+.sos-icon {
+  width: 48px; height: 48px; border-radius: 14px; margin: 0 auto 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 22px;
+}
+.sos-card h3 { font-size: 13px; font-weight: 600; }
+
+.sos-call-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin: 24px auto; padding: 16px 40px; border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #DC2626, #991B1B); color: white;
+  font-size: 17px; font-weight: 700; border: none; cursor: pointer;
+  transition: var(--transition); box-shadow: 0 4px 20px rgba(220, 38, 38, 0.3);
+  max-width: 400px; width: calc(100% - 48px);
+}
+.sos-call-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(220, 38, 38, 0.4); }
+
+.helpline-list { max-width: 600px; margin: 0 auto; padding: 0 24px 40px; }
+.helpline-item {
+  display: flex; align-items: center; padding: 14px 16px;
+  background: white; border-radius: var(--radius); margin-bottom: 8px;
+  cursor: pointer; transition: var(--transition);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.04);
+}
+.helpline-item:hover { background: #FEF2F2; border-color: #FECACA; }
+.helpline-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-right: 12px; }
+.helpline-info { flex: 1; }
+.helpline-info .name { font-size: 13px; font-weight: 600; color: var(--ink); }
+.helpline-info .number { font-size: 17px; font-weight: 700; color: #DC2626; }
+.helpline-call {
+  background: #FEE2E2; color: #DC2626; padding: 6px 14px;
+  border-radius: var(--radius-full); font-size: 11px; font-weight: 800;
+  letter-spacing: 1px; border: none; cursor: pointer;
+}
+
+/* ═══════════════════ EXPLORE PAGE ═══════════════════ */
+.explore-header {
+  background: linear-gradient(135deg, var(--deepblue), var(--river));
+  padding: 32px 24px; color: white;
+}
+.explore-header h2 { font-size: 24px; font-weight: 700; }
+
+.filter-bar {
+  display: flex; gap: 8px; padding: 16px 24px; overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.filter-chip {
+  padding: 7px 18px; border-radius: var(--radius-full);
+  border: 1.5px solid rgba(0,0,0,0.1); font-size: 13px;
+  font-weight: 500; cursor: pointer; white-space: nowrap;
+  transition: var(--transition); background: white;
+}
+.filter-chip:hover { border-color: var(--river); }
+.filter-chip.active { background: var(--river); color: white; border-color: var(--river); }
+
+.places-list { padding: 0 24px 40px; max-width: 800px; margin: 0 auto; }
+.place-card {
+  background: white; border-radius: var(--radius-lg); margin-bottom: 12px;
+  overflow: hidden; cursor: pointer; transition: var(--transition);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.04);
+}
+.place-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+.place-head { display: flex; align-items: center; padding: 16px; }
+.place-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-right: 14px; flex-shrink: 0; }
+.place-info { flex: 1; }
+.place-info h3 { font-size: 15px; font-weight: 600; }
+.place-info .cat { font-size: 11px; color: var(--ink-muted); text-transform: capitalize; }
+.place-expand { color: var(--ink-muted); font-size: 16px; transition: var(--transition); }
+.place-detail {
+  display: none; padding: 0 16px 16px; border-top: 1px solid rgba(0,0,0,0.04);
+}
+.place-detail.open { display: block; animation: fadeIn 0.3s ease; }
+.place-detail p { font-size: 13px; color: var(--ink-light); line-height: 1.7; margin-top: 12px; }
+.place-meta { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+.place-meta span { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--ink-muted); }
+.place-meta i { font-size: 14px; color: var(--saffron); }
+
+/* ═══════════════════ INFO CARDS ═══════════════════ */
+.info-banner {
+  background: linear-gradient(135deg, #FFF7ED, #FFEDD5);
+  border: 1px solid #FED7AA; border-radius: var(--radius-lg);
+  padding: 24px; margin-top: 16px;
+}
+.info-banner h3 { font-size: 16px; font-weight: 700; color: var(--saffron-dark); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+.info-banner .info-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 14px; color: var(--ink-light); }
+.info-banner .info-row i { color: var(--saffron); font-size: 16px; width: 20px; text-align: center; }
+
+/* ═══════════════════ AUTH PAGES ═══════════════════ */
+.auth-page {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(160deg, var(--maroon) 0%, var(--saffron-dark) 50%, var(--gold) 100%);
+  padding: 24px; position: relative; overflow: hidden;
+}
+.auth-page::before {
+  content: ''; position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+}
+.auth-card {
+  background: white; border-radius: var(--radius-lg); padding: 36px;
+  max-width: 420px; width: 100%; position: relative; z-index: 2;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2); animation: fadeInUp 0.5s ease;
+}
+.auth-card .auth-logo {
+  width: 56px; height: 56px; border-radius: 16px;
+  background: linear-gradient(135deg, var(--saffron), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px; font-size: 24px; color: white;
+  box-shadow: 0 4px 16px rgba(232, 101, 43, 0.3);
+}
+.auth-card h2 { text-align: center; font-size: 24px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.auth-card .auth-sub { text-align: center; font-size: 14px; color: var(--ink-muted); margin-bottom: 24px; }
+.auth-card .auth-error {
+  background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px;
+  padding: 10px 14px; font-size: 13px; color: #DC2626; text-align: center;
+  margin-bottom: 16px; display: none;
+}
+.auth-card .auth-error.show { display: block; animation: fadeIn 0.3s ease; }
+.auth-field { margin-bottom: 16px; }
+.auth-field label {
+  display: block; font-size: 11px; font-weight: 600; color: var(--ink-light);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+}
+.auth-field input, .auth-field select {
+  width: 100%; border: 1.5px solid rgba(0,0,0,0.1); border-radius: 12px;
+  padding: 12px 16px; font-size: 14px; font-family: inherit;
+  transition: var(--transition); outline: none; background: var(--cream);
+  color: var(--ink);
+}
+.auth-field input:focus, .auth-field select:focus { border-color: var(--saffron); background: white; }
+.auth-btn {
+  width: 100%; padding: 14px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, var(--saffron), var(--saffron-dark));
+  color: white; font-size: 15px; font-weight: 700; font-family: inherit;
+  cursor: pointer; transition: var(--transition); margin-top: 8px;
+}
+.auth-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-glow); }
+.auth-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.auth-switch {
+  text-align: center; margin-top: 20px; font-size: 14px; color: var(--ink-muted);
+}
+.auth-switch a {
+  color: var(--saffron); font-weight: 600; cursor: pointer; text-decoration: none;
+}
+.auth-switch a:hover { text-decoration: underline; }
+.auth-guest {
+  text-align: center; margin-top: 12px; font-size: 13px;
+}
+.auth-guest a { color: var(--ink-muted); cursor: pointer; text-decoration: none; }
+.auth-guest a:hover { color: var(--saffron); }
+.auth-lang-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.auth-lang-chip {
+  padding: 5px 14px; border-radius: var(--radius-full);
+  border: 1.5px solid rgba(0,0,0,0.1); font-size: 12px;
+  cursor: pointer; transition: var(--transition); background: white; font-weight: 500;
+}
+.auth-lang-chip:hover { border-color: var(--saffron); }
+.auth-lang-chip.active { background: var(--saffron); color: white; border-color: var(--saffron); }
+
+/* ═══════════════════ PROFILE PAGE ═══════════════════ */
+.profile-header {
+  background: linear-gradient(135deg, var(--ink), #16213E);
+  padding: 40px 24px; text-align: center; color: white;
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+.profile-avatar {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--saffron), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 12px; font-size: 28px; font-weight: 700; color: white;
+  box-shadow: 0 4px 20px rgba(232, 101, 43, 0.3);
+}
+.profile-name { font-size: 22px; font-weight: 700; }
+.profile-email { font-size: 14px; opacity: 0.6; margin-top: 2px; }
+.profile-lang-badge {
+  display: inline-block; background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.15); padding: 4px 14px;
+  border-radius: var(--radius-full); font-size: 12px; margin-top: 10px;
+}
+.profile-stats {
+  display: flex; gap: 12px; max-width: 400px; margin: -24px auto 0; padding: 0 24px;
+  position: relative; z-index: 2;
+}
+.profile-stat {
+  flex: 1; background: white; border-radius: var(--radius); padding: 14px;
+  text-align: center; box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+.profile-stat .num { font-size: 22px; font-weight: 800; color: var(--saffron); }
+.profile-stat .label { font-size: 10px; font-weight: 600; color: var(--ink-muted); margin-top: 2px; }
+.profile-section { padding: 24px; max-width: 500px; margin: 0 auto; }
+.profile-section h3 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+.profile-info-card {
+  background: white; border-radius: var(--radius); padding: 4px 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.04);
+}
+.profile-info-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px; font-size: 13px;
+}
+.profile-info-row:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.04); }
+.profile-info-row .lbl { color: var(--ink-muted); }
+.profile-info-row .val { font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: 4px; }
+.profile-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 14px; border-radius: var(--radius);
+  font-size: 14px; font-weight: 700; font-family: inherit;
+  cursor: pointer; transition: var(--transition); border: none;
+}
+.profile-btn-danger {
+  background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA;
+}
+.profile-btn-danger:hover { background: #FEE2E2; }
+.profile-btn-primary {
+  background: var(--saffron); color: white;
+}
+.profile-btn-primary:hover { background: var(--saffron-dark); }
+
+/* ═══════════════════ CHAT SIDEBAR ═══════════════════ */
+.chat-sidebar-toggle {
+  background: none; border: none; cursor: pointer; color: var(--ink-muted);
+  font-size: 20px; padding: 4px; border-radius: 8px; transition: var(--transition);
+  display: flex; align-items: center;
+}
+.chat-sidebar-toggle:hover { color: var(--saffron); background: var(--cream); }
+
+.chat-sidebar-overlay {
+  display: none; position: fixed; inset: 0; z-index: 1100;
+  background: rgba(0,0,0,0.4); backdrop-filter: blur(2px);
+}
+.chat-sidebar-overlay.open { display: block; }
+
+.chat-sidebar {
+  position: fixed; top: 0; left: -320px; bottom: 0; z-index: 1101;
+  width: 300px; max-width: 85vw; background: white;
+  box-shadow: 4px 0 30px rgba(0,0,0,0.15);
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex; flex-direction: column;
+}
+.chat-sidebar.open { left: 0; }
+
+.chat-sidebar-header {
+  padding: 16px; border-bottom: 1px solid rgba(0,0,0,0.06);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.chat-sidebar-header h3 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.chat-sidebar-header h3 i { color: var(--saffron); }
+
+.chat-sidebar-new {
+  margin: 12px 16px; padding: 10px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--saffron), var(--saffron-dark));
+  color: white; border: none; font-size: 13px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  gap: 6px; font-family: inherit; transition: var(--transition);
+}
+.chat-sidebar-new:hover { transform: translateY(-1px); box-shadow: var(--shadow-glow); }
+
+.chat-sidebar-list {
+  flex: 1; overflow-y: auto; padding: 0 8px 16px;
+}
+.chat-sidebar-item {
+  display: flex; align-items: center; padding: 10px 12px;
+  border-radius: 10px; cursor: pointer; transition: var(--transition);
+  margin-bottom: 2px; gap: 10px;
+}
+.chat-sidebar-item:hover { background: var(--cream); }
+.chat-sidebar-item.active { background: rgba(232,101,43,0.08); }
+.chat-sidebar-item i { color: var(--ink-muted); font-size: 18px; flex-shrink: 0; }
+.chat-sidebar-item.active i { color: var(--saffron); }
+.chat-sidebar-item-info { flex: 1; min-width: 0; }
+.chat-sidebar-item-info h4 {
+  font-size: 13px; font-weight: 600; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.chat-sidebar-item-info p { font-size: 10px; color: var(--ink-muted); margin-top: 1px; }
+.chat-sidebar-item .cs-delete {
+  opacity: 0; background: none; border: none; cursor: pointer;
+  color: var(--ink-muted); font-size: 16px; padding: 4px; border-radius: 6px;
+  transition: var(--transition);
+}
+.chat-sidebar-item:hover .cs-delete { opacity: 1; }
+.chat-sidebar-item .cs-delete:hover { color: #DC2626; background: #FEE2E2; }
+
+.chat-sidebar-login {
+  padding: 16px; border-top: 1px solid rgba(0,0,0,0.06);
+  text-align: center; font-size: 13px; color: var(--ink-muted);
+}
+.chat-sidebar-login a { color: var(--saffron); font-weight: 600; cursor: pointer; }
+
+/* ═══════════════════ ASSISTANT-MAP INTEGRATION ═══════════════════ */
+.chat-location-bar {
+  background: white; border-bottom: 1px solid rgba(0,0,0,0.06);
+  padding: 8px 24px; display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--ink-muted);
+}
+.chat-location-bar i { color: var(--saffron); font-size: 14px; }
+.chat-location-bar .loc-name { font-weight: 600; color: var(--ink-light); }
+.chat-location-bar .loc-change {
+  margin-left: auto; color: var(--saffron); font-weight: 600;
+  cursor: pointer; padding: 2px 8px; border-radius: var(--radius-full);
+  transition: var(--transition);
+}
+.chat-location-bar .loc-change:hover { background: rgba(232,101,43,0.08); }
+.msg-map-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: 6px; margin-left: 6px; padding: 4px 12px;
+  border-radius: var(--radius-full);
+  background: rgba(46, 134, 171, 0.08); color: var(--river);
+  font-size: 12px; font-weight: 600; cursor: pointer; border: none;
+  transition: var(--transition);
+}
+.msg-map-btn:hover { background: rgba(46, 134, 171, 0.15); }
+
+/* Map location picker modal */
+.loc-picker-overlay {
+  display: none; position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+  align-items: flex-end; justify-content: center;
+}
+.loc-picker-overlay.open { display: flex; }
+.loc-picker-sheet {
+  background: white; border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  width: 100%; max-width: 600px; max-height: 85vh;
+  padding: 20px 20px 30px; animation: fadeInUp 0.3s ease;
+  overflow-y: auto;
+}
+.loc-picker-sheet h3 { font-size: 16px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.loc-picker-sheet h3 i { color: var(--saffron); }
+.loc-picker-search {
+  width: 100%; border: 1.5px solid rgba(0,0,0,0.1); border-radius: var(--radius);
+  padding: 10px 14px 10px 38px; font-size: 14px; font-family: inherit;
+  outline: none; margin-bottom: 12px; background: var(--cream);
+}
+.loc-picker-search:focus { border-color: var(--saffron); background: white; }
+.loc-option {
+  display: flex; align-items: center; padding: 10px 12px;
+  border-radius: var(--radius); cursor: pointer;
+  transition: var(--transition); gap: 10px;
+}
+.loc-option:hover { background: var(--cream); }
+.loc-option.active { background: rgba(232,101,43,0.08); border: 1px solid rgba(232,101,43,0.2); }
+.loc-option-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.loc-option-info h4 { font-size: 13px; font-weight: 600; color: var(--ink); }
+.loc-option-info p { font-size: 11px; color: var(--ink-muted); }
+.loc-picker-actions { display: flex; gap: 8px; margin-top: 16px; }
+.loc-picker-gps {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 16px; border-radius: var(--radius);
+  background: var(--cream); border: 1px solid rgba(0,0,0,0.08);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  color: var(--ink-light); transition: var(--transition); flex: 1;
+  justify-content: center;
+}
+.loc-picker-gps:hover { background: var(--cream-dark); }
+.loc-picker-gps i { color: #4285F4; font-size: 16px; }
+.loc-picker-done {
+  flex: 1; padding: 10px 16px; border-radius: var(--radius);
+  background: var(--saffron); color: white; border: none;
+  font-size: 13px; font-weight: 700; cursor: pointer;
+  font-family: inherit; transition: var(--transition);
+}
+.loc-picker-done:hover { background: var(--saffron-dark); }
+
+/* Route Panel */
+.route-panel {
+  display: none; position: absolute; top: 12px; left: 12px; z-index: 1002;
+  background: white; border-radius: var(--radius-lg); padding: 16px;
+  width: 340px; max-width: calc(100vw - 24px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2); animation: fadeInUp 0.3s ease;
+  max-height: calc(100vh - 140px); overflow-y: auto;
+}
+.route-panel.open { display: block; }
+.route-panel-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 14px;
+}
+.route-panel-close {
+  margin-left: auto; background: none; border: none;
+  font-size: 20px; color: var(--ink-muted); cursor: pointer;
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.route-panel-close:hover { background: var(--cream); color: var(--ink); }
+
+.route-inputs { display: flex; gap: 10px; align-items: stretch; }
+.route-dots {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 14px 0; gap: 0;
+}
+.route-dot-from {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #4285F4; border: 2px solid white;
+  box-shadow: 0 0 0 2px #4285F4;
+}
+.route-dot-line {
+  width: 2px; flex: 1; min-height: 16px;
+  background: repeating-linear-gradient(to bottom, #CBD5E1 0px, #CBD5E1 4px, transparent 4px, transparent 8px);
+}
+.route-dot-to {
+  width: 10px; height: 10px; border-radius: 2px;
+  background: var(--saffron); border: 2px solid white;
+  box-shadow: 0 0 0 2px var(--saffron);
+}
+
+.route-fields { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.route-field {
+  display: flex; align-items: center; background: var(--cream);
+  border: 1.5px solid rgba(0,0,0,0.06); border-radius: 10px;
+  cursor: pointer; transition: var(--transition); overflow: hidden;
+}
+.route-field:hover { border-color: var(--saffron-light); }
+.route-input {
+  flex: 1; border: none; background: none; padding: 10px 12px;
+  font-size: 13px; font-family: inherit; cursor: pointer;
+  color: var(--ink); outline: none;
+}
+.route-input::placeholder { color: var(--ink-muted); }
+.route-input.filled { font-weight: 600; }
+.route-gps-btn {
+  background: none; border: none; padding: 8px 10px;
+  cursor: pointer; color: #4285F4; font-size: 18px;
+  transition: var(--transition);
+}
+.route-gps-btn:hover { color: #1a73e8; }
+
+.route-swap {
+  align-self: center; width: 32px; height: 32px;
+  border-radius: 8px; background: var(--cream); border: 1px solid rgba(0,0,0,0.06);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--ink-muted); font-size: 16px; transition: var(--transition);
+}
+.route-swap:hover { background: var(--cream-dark); color: var(--ink); }
+
+.route-go-btn {
+  width: 100%; margin-top: 12px; padding: 11px;
+  border-radius: 10px; border: none;
+  background: linear-gradient(135deg, var(--saffron), var(--saffron-dark));
+  color: white; font-size: 14px; font-weight: 700;
+  font-family: inherit; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  transition: var(--transition);
+}
+.route-go-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-glow); }
+.route-go-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.route-info {
+  margin-top: 10px; font-size: 13px; color: var(--ink-light);
+  display: none; padding: 10px; background: var(--cream);
+  border-radius: 8px;
+}
+.route-info.show { display: block; }
+.route-info .ri-label { color: var(--ink-muted); font-size: 11px; }
+.route-info .ri-value { font-weight: 700; color: var(--ink); font-size: 15px; }
+
+/* Route Picker dropdown */
+.route-picker {
+  display: none; position: absolute; top: 12px; left: 12px; z-index: 1003;
+  background: white; border-radius: var(--radius-lg);
+  width: 340px; max-width: calc(100vw - 24px); max-height: 400px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25); animation: fadeInUp 0.2s ease;
+  overflow: hidden;
+}
+.route-picker.open { display: block; }
+.route-picker-search {
+  width: 100%; border: none; border-bottom: 1px solid rgba(0,0,0,0.06);
+  padding: 14px 16px; font-size: 14px; font-family: inherit;
+  outline: none; color: var(--ink);
+}
+.route-picker-options { max-height: 320px; overflow-y: auto; }
+.rp-option {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  cursor: pointer; transition: background 0.15s;
+}
+.rp-option:hover { background: var(--cream); }
+.rp-option-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;
+}
+.rp-option h4 { font-size: 13px; font-weight: 600; color: var(--ink); }
+.rp-option p { font-size: 11px; color: var(--ink-muted); }
+.rp-gps-option {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.04);
+  color: #4285F4; font-weight: 600; font-size: 13px;
+}
+.rp-gps-option:hover { background: #EFF6FF; }
+.rp-gps-option i { font-size: 18px; }
+.rp-pin-option {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.04);
+  color: var(--saffron); font-weight: 600; font-size: 13px;
+}
+.rp-pin-option:hover { background: #FFF7ED; }
+.rp-pin-option i { font-size: 18px; }
+
+/* Map manual pin mode */
+.map-pin-mode-banner {
+  display: none; position: absolute; top: 64px; left: 50%;
+  transform: translateX(-50%); z-index: 1001;
+  background: var(--saffron); color: white; padding: 8px 20px;
+  border-radius: var(--radius-full); font-size: 13px; font-weight: 600;
+  box-shadow: 0 4px 16px rgba(232,101,43,0.3); animation: fadeIn 0.3s ease;
+  white-space: nowrap;
+}
+.map-pin-mode-banner.show { display: block; }
+
+/* ═══════════════════ MAP PAGE ═══════════════════ */
+.map-page { flex: 1; display: flex; flex-direction: column; position: relative; }
+.map-header {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 1000;
+  padding: 12px 16px; display: flex; gap: 8px; align-items: center;
+  pointer-events: none;
+}
+.map-header > * { pointer-events: auto; }
+.map-search {
+  flex: 1; background: white; border: none; border-radius: var(--radius);
+  padding: 12px 16px 12px 42px; font-size: 14px; font-family: inherit;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15); outline: none;
+  color: var(--ink); position: relative;
+}
+.map-search-icon {
+  position: absolute; left: 30px; top: 50%; transform: translateY(-50%);
+  z-index: 1001; color: var(--ink-muted); font-size: 18px; pointer-events: none;
+}
+.map-btn {
+  width: 44px; height: 44px; border-radius: var(--radius);
+  background: white; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; color: var(--ink-light);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  transition: var(--transition);
+}
+.map-btn:hover { color: var(--saffron); }
+.map-btn.active { background: var(--saffron); color: white; }
+#mapContainer { flex: 1; z-index: 1; }
+
+.map-filters {
+  position: absolute; top: 64px; left: 16px; right: 16px; z-index: 1000;
+  display: none; gap: 6px; flex-wrap: wrap; pointer-events: auto;
+}
+.map-filters.open { display: flex; }
+.map-filter-chip {
+  padding: 6px 14px; border-radius: var(--radius-full);
+  background: white; border: 1.5px solid rgba(0,0,0,0.08);
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: var(--transition); display: flex; align-items: center; gap: 4px;
+}
+.map-filter-chip:hover { border-color: var(--saffron); }
+.map-filter-chip.active { background: var(--saffron); color: white; border-color: var(--saffron); }
+.map-filter-chip i { font-size: 14px; }
+
+.map-place-card {
+  position: absolute; bottom: 16px; left: 16px; right: 16px; z-index: 1000;
+  background: white; border-radius: var(--radius-lg); padding: 16px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2); display: none;
+  animation: fadeInUp 0.3s ease;
+}
+.map-place-card.show { display: block; }
+.map-place-card .mpc-close {
+  position: absolute; top: 10px; right: 14px; background: none;
+  border: none; font-size: 20px; color: var(--ink-muted); cursor: pointer;
+}
+.map-place-card h3 { font-size: 16px; font-weight: 700; color: var(--ink); padding-right: 30px; }
+.map-place-card .mpc-cat { font-size: 11px; color: var(--ink-muted); text-transform: capitalize; margin-top: 2px; }
+.map-place-card p { font-size: 13px; color: var(--ink-light); line-height: 1.6; margin-top: 8px; }
+.map-place-card .mpc-meta { display: flex; gap: 16px; margin-top: 10px; flex-wrap: wrap; }
+.map-place-card .mpc-meta span { font-size: 12px; color: var(--ink-muted); display: flex; align-items: center; gap: 4px; }
+.map-place-card .mpc-meta i { color: var(--saffron); }
+.map-place-card .mpc-actions { display: flex; gap: 8px; margin-top: 12px; }
+.mpc-btn {
+  flex: 1; padding: 10px; border-radius: var(--radius);
+  border: none; cursor: pointer; font-size: 13px; font-weight: 600;
+  font-family: inherit; display: flex; align-items: center;
+  justify-content: center; gap: 6px; transition: var(--transition);
+}
+.mpc-btn-primary { background: var(--saffron); color: white; }
+.mpc-btn-primary:hover { background: var(--saffron-dark); }
+.mpc-btn-secondary { background: var(--cream); color: var(--ink-light); border: 1px solid rgba(0,0,0,0.08); }
+.mpc-btn-secondary:hover { background: var(--cream-dark); }
+
+.map-legend {
+  position: absolute; bottom: 16px; right: 16px; z-index: 999;
+  background: white; border-radius: var(--radius); padding: 10px 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12); font-size: 11px;
+}
+.map-legend-item { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.map-legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* Leaflet popup override */
+.leaflet-popup-content-wrapper { border-radius: 12px !important; padding: 0 !important; box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important; }
+.leaflet-popup-content { margin: 12px 14px !important; font-family: 'Poppins', sans-serif !important; font-size: 13px !important; }
+.leaflet-popup-content b { color: var(--ink); }
+.leaflet-popup-tip { box-shadow: none !important; }
+/* Hide default routing panel — we show info in our custom panel */
+.leaflet-routing-container {
+  display: none !important;
+}
+
+/* ═══════════════════ USER NAV BUTTON ═══════════════════ */
+.nav-user-btn {
+  display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 12px;
+  background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius-full); cursor: pointer; transition: var(--transition);
+  color: white; font-size: 13px; font-weight: 500;
+}
+.nav-user-btn:hover { background: rgba(255,255,255,0.2); }
+.nav-user-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--maroon);
+}
+
+/* ═══════════════════ RESPONSIVE ═══════════════════ */
+@media (max-width: 768px) {
+  .navbar { padding: 0 16px; }
+  .nav-links { display: none; }
+  .mobile-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: white; display: flex; justify-content: space-around;
+    padding: 8px 0 env(safe-area-inset-bottom, 8px);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+    border-top: 1px solid rgba(0,0,0,0.04);
   }
+  .mobile-nav button {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    background: none; border: none; cursor: pointer; padding: 4px 12px;
+    color: var(--ink-muted); font-size: 10px; font-weight: 500;
+    transition: var(--transition);
+  }
+  .mobile-nav button i { font-size: 22px; }
+  .mobile-nav button.active { color: var(--saffron); }
+  .chat-messages { padding-bottom: 80px; }
+  .section { padding: 24px 16px; }
+  .hero { padding: 40px 16px 60px; min-height: 360px; }
+  .actions-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .sos-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 769px) {
+  .mobile-nav { display: none; }
+}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="header-left">
-    <div class="icon">&#x1F6D5;</div>
-    <div>
-      <h1>Kumbh Mela 2027</h1>
-      <div class="subtitle">Nashik AI Assistant</div>
+<div class="app">
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <div class="nav-logo"><img src="/static/icon-192.png" alt="Yatri AI" style="width:32px;height:32px;border-radius:8px"></div>
+      <div>
+        <div class="nav-title">Yatri AI</div>
+        <div class="nav-subtitle">Nashik Kumbh Mela 2027</div>
+      </div>
+    </div>
+    <div class="nav-links">
+      <button class="nav-link active" data-page="home"><i class="ri-home-4-line"></i> <span data-i18n="home">Home</span></button>
+      <button class="nav-link" data-page="assistant"><i class="ri-mic-line"></i> <span data-i18n="askAi">Ask AI</span></button>
+      <button class="nav-link" data-page="explore"><i class="ri-compass-3-line"></i> <span data-i18n="explore">Explore</span></button>
+      <button class="nav-link" data-page="map"><i class="ri-road-map-line"></i> <span data-i18n="map">Map</span></button>
+      <button class="nav-link" data-page="emergency"><i class="ri-alarm-warning-line"></i> <span data-i18n="sos">SOS</span></button>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="nav-status">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusLabel">Connecting...</span>
+      </div>
+      <!-- Guest state -->
+      <button class="nav-link" id="navSignIn" onclick="navigate('login')" style="background:rgba(255,255,255,0.15)">
+        <i class="ri-user-line"></i> Sign In
+      </button>
+      <!-- Logged in state -->
+      <div class="nav-user-btn" id="navUserBtn" style="display:none" onclick="navigate('profile')">
+        <span id="navUserName">User</span>
+        <div class="nav-user-avatar" id="navUserAvatar">U</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══ HOME PAGE ═══ -->
+  <div class="page active" id="page-home">
+    <div class="hero">
+      <div class="hero-float"><i class="ri-ancient-pavilion-line"></i></div>
+      <div class="hero-float"><i class="ri-water-flash-line"></i></div>
+      <div class="hero-float"><i class="ri-fire-line"></i></div>
+      <div class="hero-float"><i class="ri-leaf-line"></i></div>
+      <div class="hero-content">
+        <div class="hero-badge"><i class="ri-sparkling-2-fill"></i> AI-Powered Multilingual Assistant</div>
+        <h1 data-i18n="heroTitle">Your <span>Kumbh Mela</span> Companion</h1>
+        <p data-i18n="heroSub">Speak in Hindi, Marathi, or any language. Get instant answers about schedules, ghats, transport, food, and emergencies.</p>
+        <button class="hero-cta" onclick="navigate('assistant')">
+          <i class="ri-mic-fill"></i> <span data-i18n="startTalking">Start Talking</span>
+        </button>
+      </div>
+      <div class="wave-divider">
+        <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+          <path d="M0,60 C150,100 350,0 600,60 C850,120 1050,20 1200,60 L1200,120 L0,120 Z"></path>
+        </svg>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><i class="ri-flashlight-line"></i> <span data-i18n="quickActions">Quick Actions</span></div>
+      <div class="actions-grid">
+        <div class="action-card animate-in animate-delay-1" onclick="navigate('assistant')">
+          <div class="action-icon" style="background:linear-gradient(135deg,#E8652B,#C44B1A)"><i class="ri-mic-fill"></i></div>
+          <h3>Voice Assistant</h3><p>Ask anything</p>
+        </div>
+        <div class="action-card animate-in animate-delay-2" onclick="navigate('assistant')">
+          <div class="action-icon" style="background:linear-gradient(135deg,#7C3AED,#6D28D9)"><i class="ri-calendar-event-fill"></i></div>
+          <h3>Kumbh Schedule</h3><p>Dates & events</p>
+        </div>
+        <div class="action-card animate-in animate-delay-3" onclick="navigate('explore')">
+          <div class="action-icon" style="background:linear-gradient(135deg,#2563EB,#1D4ED8)"><i class="ri-compass-3-fill"></i></div>
+          <h3>Explore Places</h3><p>Temples & ghats</p>
+        </div>
+        <div class="action-card animate-in animate-delay-4" onclick="navigate('emergency')">
+          <div class="action-icon" style="background:linear-gradient(135deg,#DC2626,#B91C1C)"><i class="ri-alarm-warning-fill"></i></div>
+          <h3>Emergency SOS</h3><p>Instant help</p>
+        </div>
+        <div class="action-card animate-in animate-delay-3" onclick="navigate('assistant')">
+          <div class="action-icon" style="background:linear-gradient(135deg,#059669,#047857)"><i class="ri-bus-fill"></i></div>
+          <h3>Transport</h3><p>Routes & trains</p>
+        </div>
+        <div class="action-card animate-in animate-delay-4" onclick="navigate('assistant')">
+          <div class="action-icon" style="background:linear-gradient(135deg,#D97706,#B45309)"><i class="ri-goblet-fill"></i></div>
+          <h3>Food & Wine</h3><p>Misal, wineries</p>
+        </div>
+      </div>
+
+      <div class="info-banner animate-in animate-delay-3">
+        <h3><i class="ri-ancient-pavilion-fill"></i> Nashik Simhastha Kumbh Mela 2027</h3>
+        <div class="info-row"><i class="ri-calendar-line"></i> July – September 2027 (expected)</div>
+        <div class="info-row"><i class="ri-map-pin-line"></i> Ramkund, Godavari River, Nashik, Maharashtra</div>
+        <div class="info-row"><i class="ri-group-line"></i> Expected: 5 Crore+ pilgrims</div>
+        <div class="info-row"><i class="ri-water-flash-line"></i> 5 Shahi Snan dates at sacred ghats</div>
+      </div>
     </div>
   </div>
-  <select class="lang-select" id="langSelect">
-    <option value="hi">&#x1F1EE;&#x1F1F3; Hindi</option>
-    <option value="mr">&#x1F1EE;&#x1F1F3; Marathi</option>
-    <option value="en">&#x1F1EC;&#x1F1E7; English</option>
-    <option value="gu">&#x1F1EE;&#x1F1F3; Gujarati</option>
-    <option value="ta">&#x1F1EE;&#x1F1F3; Tamil</option>
-    <option value="te">&#x1F1EE;&#x1F1F3; Telugu</option>
-    <option value="kn">&#x1F1EE;&#x1F1F3; Kannada</option>
-    <option value="ml">&#x1F1EE;&#x1F1F3; Malayalam</option>
-  </select>
-</header>
 
-<div class="status-bar">
-  <span class="dot" id="statusDot"></span>
-  <span id="statusText">Connecting...</span>
-</div>
+  <!-- ═══ ASSISTANT PAGE ═══ -->
+  <div class="page" id="page-assistant">
+    <div class="chat-page">
+      <!-- Chat Sidebar -->
+      <div class="chat-sidebar-overlay" id="chatSidebarOverlay" onclick="closeChatSidebar()"></div>
+      <div class="chat-sidebar" id="chatSidebar">
+        <div class="chat-sidebar-header">
+          <h3><i class="ri-chat-3-line"></i> Conversations</h3>
+          <button onclick="closeChatSidebar()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--ink-muted)"><i class="ri-close-line"></i></button>
+        </div>
+        <button class="chat-sidebar-new" onclick="newConversation()"><i class="ri-add-line"></i> New Chat</button>
+        <div class="chat-sidebar-list" id="chatSidebarList"></div>
+        <div class="chat-sidebar-login" id="chatSidebarLogin"></div>
+      </div>
 
-<div class="chat-container" id="chatContainer">
-  <div class="welcome" id="welcomeScreen">
-    <div class="big-icon">&#x1F64F;</div>
-    <h2>Namaste!</h2>
-    <p>Ask anything about Nashik Kumbh Mela 2027 — schedules, ghats, places, transport, or emergencies.</p>
-    <p style="font-size:13px; margin-top:8px;">Tap the mic to speak or type below</p>
+      <div class="chat-header">
+        <div class="chat-header-left">
+          <button class="chat-sidebar-toggle" onclick="openChatSidebar()" title="Chat history"><i class="ri-menu-line"></i></button>
+          <div class="chat-avatar"><i class="ri-sparkling-2-fill"></i></div>
+          <div>
+            <h2 id="chatTitle">Yatri AI</h2>
+            <div class="sub">Kumbh Mela Assistant</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button onclick="clearChatHistory()" title="Clear chat" style="background:none;border:none;cursor:pointer;color:var(--ink-muted);font-size:18px;padding:4px;border-radius:8px;transition:all 0.2s" onmouseover="this.style.color='var(--saffron)'" onmouseout="this.style.color='var(--ink-muted)'"><i class="ri-delete-bin-6-line"></i></button>
+          <button class="lang-picker-btn" onclick="toggleLangPicker()">
+            <i class="ri-global-line"></i> <span id="langLabel">Auto</span> <i class="ri-arrow-down-s-line"></i>
+          </button>
+        </div>
+      </div>
+      <div class="lang-dropdown" id="langDropdown">
+        <div class="lang-chip active" data-lang="auto" onclick="setLang('auto',this)">Auto-detect</div>
+        <div class="lang-chip" data-lang="hi" onclick="setLang('hi',this)">हिन्दी</div>
+        <div class="lang-chip" data-lang="mr" onclick="setLang('mr',this)">मराठी</div>
+        <div class="lang-chip" data-lang="en" onclick="setLang('en',this)">English</div>
+        <div class="lang-chip" data-lang="gu" onclick="setLang('gu',this)">ગુજરાતી</div>
+        <div class="lang-chip" data-lang="ta" onclick="setLang('ta',this)">தமிழ்</div>
+        <div class="lang-chip" data-lang="te" onclick="setLang('te',this)">తెలుగు</div>
+        <div class="lang-chip" data-lang="kn" onclick="setLang('kn',this)">ಕನ್ನಡ</div>
+        <div class="lang-chip" data-lang="ml" onclick="setLang('ml',this)">മലയാളം</div>
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-welcome" id="chatWelcome">
+          <div class="chat-welcome-icon"><i class="ri-sparkling-2-fill"></i></div>
+          <h3 data-i18n="askAi">Ask Yatri AI</h3>
+          <p>Speak or type in any language. I understand Hindi, Marathi, English and more.</p>
+          <div class="chat-welcome-chips">
+            <div class="chat-welcome-chip" onclick="quickAsk('When is Kumbh Mela 2027?')"><i class="ri-calendar-line"></i> Kumbh dates</div>
+            <div class="chat-welcome-chip" onclick="quickAsk('Ramkund kya hai?')"><i class="ri-water-flash-line"></i> About Ramkund</div>
+            <div class="chat-welcome-chip" onclick="quickAsk('How to reach Trimbakeshwar from Nashik?')"><i class="ri-route-line"></i> Trimbakeshwar route</div>
+            <div class="chat-welcome-chip" onclick="quickAsk('Best misal pav in Nashik')"><i class="ri-restaurant-line"></i> Best misal pav</div>
+            <div class="chat-welcome-chip" onclick="quickAsk('Sula Vineyards timing and entry fee')"><i class="ri-goblet-line"></i> Sula Vineyards</div>
+            <div class="chat-welcome-chip" onclick="quickAsk('Emergency medical help')"><i class="ri-heart-pulse-line"></i> Medical emergency</div>
+          </div>
+        </div>
+      </div>
+      <div class="typing-indicator" id="typingIndicator">
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+      </div>
+      <div class="chat-input-bar">
+        <input class="chat-input" id="chatInput" data-i18n="typeQuestion" placeholder="Type your question..." onkeydown="if(event.key==='Enter')sendText()">
+        <button class="btn-send" id="sendBtn" onclick="sendText()"><i class="ri-send-plane-fill"></i></button>
+        <button class="btn-mic" id="micBtn" onclick="toggleMic()"><i class="ri-mic-fill"></i></button>
+      </div>
+    </div>
   </div>
-</div>
 
-<div class="typing-indicator" id="typingIndicator">
-  <span></span><span></span><span></span>
-</div>
+  <!-- ═══ EXPLORE PAGE ═══ -->
+  <div class="page" id="page-explore">
+    <div class="explore-header">
+      <h2><i class="ri-compass-3-line"></i> Explore Nashik</h2>
+      <p style="opacity:0.7;font-size:14px;margin-top:4px" id="placeCount">Loading places...</p>
+    </div>
+    <div class="filter-bar" id="filterBar"></div>
+    <div class="places-list" id="placesList"></div>
+  </div>
 
-<div class="emergency-bar">
-  <button onclick="sendEmergency('medical')">&#x1F691; Medical</button>
-  <button onclick="sendEmergency('missing_person')">&#x1F6A8; Missing Person</button>
-  <button onclick="sendEmergency('stampede')">&#x26A0;&#xFE0F; Stampede</button>
-  <button onclick="sendEmergency('fire')">&#x1F525; Fire</button>
-  <button onclick="sendEmergency('drowning')">&#x1F30A; Drowning</button>
-  <button onclick="showContacts()">&#x1F4DE; Helplines</button>
-</div>
+  <!-- ═══ EMERGENCY PAGE ═══ -->
+  <div class="page" id="page-emergency">
+    <div class="sos-header">
+      <h2><i class="ri-alarm-warning-fill"></i> Emergency SOS</h2>
+      <p>Instant help — no AI delay</p>
+    </div>
+    <div class="sos-grid" id="sosGrid"></div>
+    <div id="sosResponse"></div>
+    <button class="sos-call-btn" onclick="window.location.href='tel:112'">
+      <i class="ri-phone-fill"></i> Call 112 Emergency
+    </button>
+    <div class="helpline-list" id="helplineList"></div>
+  </div>
 
-<div class="controls">
-  <input type="text" class="text-input" id="textInput" placeholder="Type your question..."
-         onkeydown="if(event.key==='Enter')sendText()">
-  <button class="send-btn" id="sendBtn" onclick="sendText()" title="Send">&#x27A4;</button>
-  <button class="mic-btn" id="micBtn" onclick="toggleRecording()" title="Hold to speak">&#x1F3A4;</button>
+  <!-- ═══ MAP PAGE ═══ -->
+  <div class="page" id="page-map">
+    <div class="map-page">
+      <div class="map-header">
+        <i class="ri-search-line map-search-icon"></i>
+        <input class="map-search" id="mapSearch" placeholder="Search places on map..." oninput="filterMapMarkers(this.value)">
+        <button class="map-btn" id="mapDirBtn" onclick="openRoutePanel()" title="Get directions" style="background:var(--saffron);color:white"><i class="ri-route-line"></i></button>
+        <button class="map-btn" id="mapFilterToggle" onclick="toggleMapFilters()" title="Filter categories"><i class="ri-filter-3-line"></i></button>
+        <button class="map-btn" id="mapLocateBtn" onclick="locateMe()" title="My location"><i class="ri-focus-3-line"></i></button>
+        <button class="map-btn" id="mapPinBtn" onclick="togglePinMode()" title="Set my location manually"><i class="ri-map-pin-add-line"></i></button>
+      </div>
+      <div class="map-filters" id="mapFilters"></div>
+      <!-- Route Panel -->
+      <div class="route-panel" id="routePanel">
+        <div class="route-panel-header">
+          <i class="ri-route-line" style="color:var(--saffron);font-size:20px"></i>
+          <span style="font-weight:700;font-size:14px">Get Directions</span>
+          <button class="route-panel-close" onclick="closeRoutePanel()"><i class="ri-close-line"></i></button>
+        </div>
+        <div class="route-inputs">
+          <div class="route-dots">
+            <div class="route-dot-from"></div>
+            <div class="route-dot-line"></div>
+            <div class="route-dot-to"></div>
+          </div>
+          <div class="route-fields">
+            <div class="route-field" onclick="openRoutePicker('from')">
+              <input class="route-input" id="routeFromInput" placeholder="Your location" readonly>
+              <button class="route-gps-btn" onclick="event.stopPropagation();routeUseGPS()" title="Use GPS"><i class="ri-focus-3-line"></i></button>
+            </div>
+            <div class="route-field" onclick="openRoutePicker('to')">
+              <input class="route-input" id="routeToInput" placeholder="Where to?" readonly>
+            </div>
+          </div>
+          <button class="route-swap" onclick="swapRoute()" title="Swap"><i class="ri-arrow-up-down-line"></i></button>
+        </div>
+        <button class="route-go-btn" id="routeGoBtn" onclick="executeRoute()" disabled>
+          <i class="ri-navigation-fill"></i> Navigate
+        </button>
+        <div class="route-info" id="routeInfo"></div>
+      </div>
+
+      <!-- Route Picker Dropdown -->
+      <div class="route-picker" id="routePicker">
+        <input class="route-picker-search" id="routePickerSearch" placeholder="Search place..." oninput="filterRoutePicker(this.value)">
+        <div class="route-picker-options" id="routePickerOptions"></div>
+      </div>
+
+      <div class="map-pin-mode-banner" id="mapPinBanner">Tap on map to set your location</div>
+      <div id="mapContainer"></div>
+      <div class="map-place-card" id="mapPlaceCard">
+        <button class="mpc-close" onclick="closeMapCard()">&times;</button>
+        <h3 id="mpcName"></h3>
+        <div class="mpc-cat" id="mpcCat"></div>
+        <p id="mpcDesc"></p>
+        <div class="mpc-meta" id="mpcMeta"></div>
+        <div class="mpc-actions">
+          <button class="mpc-btn mpc-btn-primary" id="mpcRoute" onclick="routeToPlace()"><i class="ri-route-line"></i> Get Directions</button>
+          <button class="mpc-btn mpc-btn-secondary" onclick="closeMapCard()"><i class="ri-close-line"></i> Close</button>
+        </div>
+      </div>
+      <div class="map-legend" id="mapLegend">
+        <strong style="font-size:10px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:1px">Legend</strong>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#E8652B"></div> Temples (51)</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#2E86AB"></div> Ghats (16)</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#7C3AED"></div> Tourist (21)</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#D97706"></div> Wineries (11)</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#EC4899"></div> Food (28)</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#6366F1"></div> Hotels (19)</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#059669"></div> Transport (14)</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#DC2626"></div> Emergency (10)</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#0891B2"></div> Markets (8)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Location Picker Modal -->
+  <div class="loc-picker-overlay" id="locPickerOverlay" onclick="if(event.target===this)closeLocPicker()">
+    <div class="loc-picker-sheet">
+      <h3><i class="ri-map-pin-line"></i> Set Your Location</h3>
+      <div style="position:relative">
+        <i class="ri-search-line" style="position:absolute;left:12px;top:11px;color:var(--ink-muted)"></i>
+        <input class="loc-picker-search" id="locPickerSearch" placeholder="Search landmark or area..." oninput="filterLocOptions(this.value)">
+      </div>
+      <div id="locPickerOptions" style="max-height:300px;overflow-y:auto"></div>
+      <div class="loc-picker-actions">
+        <button class="loc-picker-gps" onclick="gpsLocPicker()"><i class="ri-focus-3-line"></i> Use GPS</button>
+        <button class="loc-picker-gps" onclick="openMapPicker()"><i class="ri-map-pin-add-line"></i> Pick on Map</button>
+        <button class="loc-picker-done" onclick="confirmLocPicker()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ LOGIN PAGE ═══ -->
+  <div class="page" id="page-login">
+    <div class="auth-page">
+      <div class="auth-card">
+        <div class="auth-logo"><i class="ri-ancient-pavilion-fill"></i></div>
+        <h2>Welcome Back</h2>
+        <p class="auth-sub">Sign in to your Yatri account</p>
+        <div class="auth-error" id="loginError"></div>
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="loginEmail" placeholder="you@email.com" autocomplete="email">
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="loginPassword" placeholder="Enter password" autocomplete="current-password">
+        </div>
+        <button class="auth-btn" id="loginBtn" onclick="handleLogin()">
+          <span id="loginBtnText">Sign In</span>
+        </button>
+        <p class="auth-switch">Don't have an account? <a onclick="navigate('register')">Create one</a></p>
+        <p class="auth-guest"><a onclick="navigate('home')">Continue as guest &rarr;</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ REGISTER PAGE ═══ -->
+  <div class="page" id="page-register">
+    <div class="auth-page">
+      <div class="auth-card">
+        <div class="auth-logo"><i class="ri-sparkling-2-fill"></i></div>
+        <h2>Join Yatri AI</h2>
+        <p class="auth-sub">Your Kumbh Mela companion</p>
+        <div class="auth-error" id="registerError"></div>
+        <div class="auth-field">
+          <label>Full Name</label>
+          <input type="text" id="regName" placeholder="Your name" autocomplete="name">
+        </div>
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="regEmail" placeholder="you@email.com" autocomplete="email">
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="regPassword" placeholder="Min 6 characters" autocomplete="new-password">
+        </div>
+        <div class="auth-field">
+          <label>Preferred Language</label>
+          <div class="auth-lang-row" id="regLangRow">
+            <div class="auth-lang-chip active" data-lang="hi" onclick="selectRegLang('hi',this)">हिन्दी</div>
+            <div class="auth-lang-chip" data-lang="mr" onclick="selectRegLang('mr',this)">मराठी</div>
+            <div class="auth-lang-chip" data-lang="en" onclick="selectRegLang('en',this)">English</div>
+            <div class="auth-lang-chip" data-lang="gu" onclick="selectRegLang('gu',this)">ગુજરાતી</div>
+            <div class="auth-lang-chip" data-lang="ta" onclick="selectRegLang('ta',this)">தமிழ்</div>
+            <div class="auth-lang-chip" data-lang="te" onclick="selectRegLang('te',this)">తెలుగు</div>
+          </div>
+        </div>
+        <button class="auth-btn" id="regBtn" onclick="handleRegister()">
+          <span id="regBtnText">Create Account</span>
+        </button>
+        <p class="auth-switch">Already have an account? <a onclick="navigate('login')">Sign In</a></p>
+        <p class="auth-guest"><a onclick="navigate('home')">Skip for now &rarr;</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PROFILE PAGE ═══ -->
+  <div class="page" id="page-profile">
+    <div class="profile-header">
+      <div class="profile-avatar" id="profileAvatar">Y</div>
+      <div class="profile-name" id="profileName">Yatri</div>
+      <div class="profile-email" id="profileEmail">Not signed in</div>
+      <div class="profile-lang-badge" id="profileLang">हिन्दी</div>
+    </div>
+    <div class="profile-stats">
+      <div class="profile-stat"><div class="num" id="statQueries">0</div><div class="label">Questions</div></div>
+      <div class="profile-stat"><div class="num" id="statLangs">0</div><div class="label">Languages</div></div>
+      <div class="profile-stat"><div class="num" id="statFavs">0</div><div class="label">Favorites</div></div>
+    </div>
+    <div class="profile-section">
+      <h3>Preferred Language</h3>
+      <div class="auth-lang-row" id="profileLangRow"></div>
+    </div>
+    <div class="profile-section">
+      <h3>System Status</h3>
+      <div class="profile-info-card" id="profileServerInfo">
+        <div class="profile-info-row"><span class="lbl">Server</span><span class="val" id="piServer">Checking...</span></div>
+        <div class="profile-info-row"><span class="lbl">AI Model</span><span class="val" id="piModel">-</span></div>
+        <div class="profile-info-row"><span class="lbl">Documents</span><span class="val" id="piDocs">-</span></div>
+        <div class="profile-info-row"><span class="lbl">App Version</span><span class="val">1.0.0</span></div>
+      </div>
+    </div>
+    <div class="profile-section" id="profileActions">
+      <!-- Filled by JS -->
+    </div>
+    <div style="text-align:center;padding:20px;font-size:12px;color:var(--ink-muted)">
+      <i class="ri-ancient-pavilion-line"></i> Yatri AI &mdash; Nashik Kumbh Mela 2027
+    </div>
+  </div>
+
+  <!-- Mobile bottom nav -->
+  <div class="mobile-nav">
+    <button class="active" data-page="home"><i class="ri-home-4-fill"></i> <span data-i18n="home">Home</span></button>
+    <button data-page="assistant"><i class="ri-mic-line"></i> <span data-i18n="askAi">Ask AI</span></button>
+    <button data-page="explore"><i class="ri-compass-3-line"></i> <span data-i18n="explore">Explore</span></button>
+    <button data-page="map"><i class="ri-road-map-line"></i> <span data-i18n="map">Map</span></button>
+    <button data-page="emergency"><i class="ri-alarm-warning-line"></i> <span data-i18n="sos">SOS</span></button>
+  </div>
 </div>
 
 <script>
 const API = window.location.origin;
-let mediaRecorder = null;
-let audioChunks = [];
-let isRecording = false;
-let isProcessing = false;
-let currentAudio = null;
+let selectedLang = 'auto';
+let mediaRecorder = null, audioChunks = [], isRecording = false, isProcessing = false, currentAudio = null;
 
-const chatContainer = document.getElementById('chatContainer');
-const micBtn = document.getElementById('micBtn');
-const sendBtn = document.getElementById('sendBtn');
-const textInput = document.getElementById('textInput');
-const typingIndicator = document.getElementById('typingIndicator');
-const welcomeScreen = document.getElementById('welcomeScreen');
-const statusDot = document.getElementById('statusDot');
-const statusText = document.getElementById('statusText');
+// ═══ EARLY DECLARATIONS (must be before any function that references them) ═══
+let authToken = localStorage.getItem('yatri_token');
+let currentUser = JSON.parse(localStorage.getItem('yatri_user') || 'null');
+let regLang = 'hi';
+let chatHistory = JSON.parse(localStorage.getItem('yatri_chat') || '[]');
+const MAX_HISTORY = 100;
+let allPlaces = [], activeFilter = 'all';
 
-// Health check
+const SOS_SCENARIOS = [
+  { key: 'medical', icon: 'ri-heart-pulse-fill', title: 'Medical', color: '#EF4444', bg: '#FEE2E2' },
+  { key: 'missing_person', icon: 'ri-user-search-fill', title: 'Missing Person', color: '#F97316', bg: '#FFEDD5' },
+  { key: 'stampede', icon: 'ri-error-warning-fill', title: 'Stampede', color: '#EAB308', bg: '#FEF9C3' },
+  { key: 'fire', icon: 'ri-fire-fill', title: 'Fire', color: '#DC2626', bg: '#FEE2E2' },
+  { key: 'drowning', icon: 'ri-flood-fill', title: 'Drowning', color: '#2563EB', bg: '#DBEAFE' },
+  { key: 'lost_belongings', icon: 'ri-briefcase-fill', title: 'Lost Items', color: '#7C3AED', bg: '#EDE9FE' },
+];
+const HELPLINES = [
+  { name: 'Emergency', num: '112', icon: 'ri-shield-star-fill', color: '#DC2626', bg: '#FEE2E2' },
+  { name: 'Police', num: '100', icon: 'ri-shield-fill', color: '#1E40AF', bg: '#DBEAFE' },
+  { name: 'Ambulance', num: '108', icon: 'ri-heart-pulse-fill', color: '#059669', bg: '#D1FAE5' },
+  { name: 'Fire Brigade', num: '101', icon: 'ri-fire-fill', color: '#EA580C', bg: '#FFEDD5' },
+  { name: 'Kumbh Helpline', num: '1800-120-2027', icon: 'ri-phone-fill', color: '#7C3AED', bg: '#EDE9FE' },
+  { name: 'Missing Persons', num: '1800-222-2027', icon: 'ri-user-search-fill', color: '#0284C7', bg: '#E0F2FE' },
+  { name: 'Women Helpline', num: '1091', icon: 'ri-shield-user-fill', color: '#DB2777', bg: '#FCE7F3' },
+];
+const LANG_NAMES = { hi:'हिन्दी', mr:'मराठी', en:'English', gu:'ગુજરાતી', ta:'தமிழ்', te:'తెలుగు', kn:'ಕನ್ನಡ', ml:'മലయാളം' };
+
+// ═══ CATEGORY HELPERS (shared by Explore, Map, Assistant) ═══
+const MAP_CATS_SHARED = [
+  { key: 'temple', color: '#E8652B' }, { key: 'ghat', color: '#2E86AB' },
+  { key: 'tourist', color: '#7C3AED' }, { key: 'winery', color: '#D97706' },
+  { key: 'transport', color: '#059669' }, { key: 'accommodation', color: '#6366F1' },
+  { key: 'food', color: '#EC4899' }, { key: 'emergency', color: '#DC2626' },
+  { key: 'market', color: '#0891B2' },
+];
+
+function normCat(cat) {
+  if (!cat) return '';
+  const c = cat.toLowerCase();
+  if (c.includes('temple') || c.includes('mandir')) return 'temple';
+  if (c.includes('ghat') || c.includes('kund') || c.includes('tirtha')) return 'ghat';
+  if (c.includes('tourist') || c.includes('fort') || c.includes('cave') || c.includes('waterfall') || c.includes('hill') || c.includes('trek')) return 'tourist';
+  if (c.includes('winery') || c.includes('vineyard') || c.includes('wine')) return 'winery';
+  if (c.includes('food') || c.includes('restaurant') || c.includes('misal')) return 'food';
+  if (c.includes('accommodation') || c.includes('dharamshala') || c.includes('lodge') || c.includes('resort')) return 'accommodation';
+  if (c === 'hotel') return 'accommodation';
+  if (c.includes('transport') || c.includes('station') || c.includes('airport') || c.includes('bus stand')) return 'transport';
+  if (c.includes('emergency') || c.includes('hospital') || c.includes('police') || c.includes('fire')) return 'emergency';
+  if (c.includes('market') || c.includes('shop') || c.includes('bazaar') || c.includes('mall')) return 'market';
+  return c;
+}
+
+function getCatColor(cat) {
+  const n = normCat(cat);
+  const c = MAP_CATS_SHARED.find(m => m.key === n);
+  return c ? c.color : '#6B7280';
+}
+
+function getCatIcon(cat) {
+  const iconMap = {
+    temple: 'ri-ancient-pavilion-fill', ghat: 'ri-water-flash-fill',
+    tourist: 'ri-camera-fill', winery: 'ri-goblet-fill',
+    transport: 'ri-bus-fill', accommodation: 'ri-hotel-fill',
+    food: 'ri-restaurant-fill', emergency: 'ri-heart-pulse-fill',
+    market: 'ri-shopping-bag-fill',
+  };
+  return iconMap[normCat(cat)] || 'ri-map-pin-fill';
+}
+
+// ═══ NAVIGATION ═══
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-link, .mobile-nav button').forEach(b => {
+    b.classList.toggle('active', b.dataset.page === page);
+  });
+  if (page === 'explore' && !document.getElementById('placesList').children.length) loadPlaces();
+  if (page === 'emergency' && !document.getElementById('sosGrid').children.length) loadEmergency();
+}
+document.querySelectorAll('[data-page]').forEach(b => b.addEventListener('click', () => navigate(b.dataset.page)));
+
+// ═══ HEALTH CHECK ═══
 async function checkHealth() {
   try {
     const r = await fetch(API + '/api/v1/health');
     const d = await r.json();
-    statusDot.className = 'dot online';
-    statusText.textContent = `Online | ${d.total_documents} docs | ${d.backend}:${d.model}`;
+    document.getElementById('statusDot').className = 'status-dot online';
+    document.getElementById('statusLabel').textContent = `Online · ${d.total_documents} docs`;
   } catch {
-    statusDot.className = 'dot offline';
-    statusText.textContent = 'Offline — server not reachable';
+    document.getElementById('statusDot').className = 'status-dot offline';
+    document.getElementById('statusLabel').textContent = 'Offline';
   }
 }
-checkHealth();
-setInterval(checkHealth, 30000);
+checkHealth(); setInterval(checkHealth, 30000);
 
-function getLang() {
-  return document.getElementById('langSelect').value;
+// ═══ LANGUAGE PICKER ═══
+function toggleLangPicker() { document.getElementById('langDropdown').classList.toggle('open'); }
+function setLang(lang, el) {
+  selectedLang = lang;
+  document.querySelectorAll('.lang-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('langLabel').textContent = el.textContent;
+  document.getElementById('langDropdown').classList.remove('open');
+  // Update entire UI language
+  if (lang !== 'auto') setUILanguage(lang);
+}
+
+// ═══ CHAT WITH HISTORY ═══
+function saveChatHistory() {
+  // Save locally (last MAX_HISTORY, no audio)
+  const trimmed = chatHistory.slice(-MAX_HISTORY).map(m => ({
+    type: m.type, text: m.text, lang: m.lang, time: m.time
+  }));
+  localStorage.setItem('yatri_chat', JSON.stringify(trimmed));
+}
+
+// Save to server (if logged in)
+function logToServer(queryText, responseText, language, queryType) {
+  if (!authToken) return;
+  fetch(API + '/api/v1/sessions/log', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+    body: JSON.stringify({ query_text: queryText, response_text: responseText, language: language || 'en', query_type: queryType || 'text' }),
+  }).catch(() => {});
+}
+
+// Load from server (if logged in, overrides local)
+async function loadServerHistory() {
+  if (!authToken) return;
+  try {
+    const res = await fetch(API + '/api/v1/sessions/history', {
+      headers: { 'Authorization': 'Bearer ' + authToken },
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.messages && data.messages.length > 0) {
+      chatHistory = data.messages;
+      saveChatHistory(); // sync to local
+      renderChatHistory();
+    }
+  } catch {}
+}
+
+function renderChatHistory() {
+  const container = document.getElementById('chatMessages');
+  container.innerHTML = '';
+  if (chatHistory.length === 0) {
+    container.innerHTML = '<div class="msg msg-system"><div class="msg-bubble">' + t('welcomeMsg') + '</div></div>';
+    return;
+  }
+  chatHistory.forEach(m => {
+    const wrap = document.createElement('div');
+    wrap.className = `msg msg-${m.type}`;
+    let html = '<div class="msg-bubble">';
+    if (m.type === 'bot' && m.lang) html = `<div class="msg-bubble"><div class="msg-lang">${m.lang}</div>`;
+    html += (m.text || '').replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html += '</div>';
+    wrap.innerHTML = html;
+    container.appendChild(wrap);
+  });
+  const last = container.lastElementChild;
+  if (last) last.scrollIntoView({ behavior: 'auto', block: 'end' });
+}
+
+function clearChatHistory() {
+  chatHistory = [];
+  localStorage.removeItem('yatri_chat');
+  // Also clear on server
+  if (authToken) {
+    fetch(API + '/api/v1/sessions/history', {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + authToken },
+    }).catch(() => {});
+  }
+  const container = document.getElementById('chatMessages');
+  container.innerHTML = '<div class="msg msg-system"><div class="msg-bubble">Chat cleared.</div></div>';
+}
+
+function addMsg(type, text, audioB64, lang) {
+  hideWelcome();
+  // Save to history
+  chatHistory.push({ type, text, lang, time: Date.now() });
+  saveChatHistory();
+
+  const wrap = document.createElement('div');
+  wrap.className = `msg msg-${type}`;
+  let html = '<div class="msg-bubble">';
+  if (type === 'bot' && lang) html = `<div class="msg-bubble"><div class="msg-lang">${lang}</div>`;
+  html += (text || '').replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  if (audioB64) {
+    const id = 'p' + Date.now();
+    html += `<br><button class="msg-play" id="${id}" onclick="playB64('${id}','${audioB64}')"><i class="ri-volume-up-fill"></i> Play</button>`;
+  }
+  html += '</div>';
+  wrap.innerHTML = html;
+  document.getElementById('chatMessages').appendChild(wrap);
+  wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+// ═══ CONVERSATION SIDEBAR ═══
+let currentConvId = localStorage.getItem('yatri_conv_id') || null;
+let conversations = [];
+
+function openChatSidebar() {
+  document.getElementById('chatSidebarOverlay').classList.add('open');
+  document.getElementById('chatSidebar').classList.add('open');
+  loadConversations();
+}
+function closeChatSidebar() {
+  document.getElementById('chatSidebarOverlay').classList.remove('open');
+  document.getElementById('chatSidebar').classList.remove('open');
+}
+
+async function loadConversations() {
+  const list = document.getElementById('chatSidebarList');
+  const loginArea = document.getElementById('chatSidebarLogin');
+
+  if (!authToken) {
+    list.innerHTML = '';
+    loginArea.innerHTML = '<a onclick="closeChatSidebar();navigate(\'login\')">Sign in</a> to save conversations across devices';
+    return;
+  }
+  loginArea.innerHTML = '';
+
+  try {
+    const res = await fetch(API + '/api/v1/sessions/conversations', {
+      headers: { 'Authorization': 'Bearer ' + authToken },
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    conversations = data.conversations || [];
+
+    if (conversations.length === 0) {
+      list.innerHTML = '<p style="padding:20px;text-align:center;font-size:13px;color:var(--ink-muted)">No conversations yet.<br>Start chatting!</p>';
+      return;
+    }
+
+    list.innerHTML = conversations.map(c => {
+      const date = new Date(c.created_at);
+      const dateStr = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+      const isActive = c.id === currentConvId;
+      return `<div class="chat-sidebar-item ${isActive ? 'active' : ''}" onclick="loadConversation('${c.id}')">
+        <i class="ri-chat-1-line"></i>
+        <div class="chat-sidebar-item-info">
+          <h4>${(c.title || 'New Chat').replace(/</g,'&lt;')}</h4>
+          <p>${dateStr} · ${c.message_count || 0} messages</p>
+        </div>
+        <button class="cs-delete" onclick="event.stopPropagation();deleteConversation('${c.id}')" title="Delete"><i class="ri-delete-bin-line"></i></button>
+      </div>`;
+    }).join('');
+  } catch {}
+}
+
+async function loadConversation(convId) {
+  if (!authToken) return;
+  currentConvId = convId;
+  localStorage.setItem('yatri_conv_id', convId);
+
+  try {
+    const res = await fetch(API + `/api/v1/sessions/conversations/${convId}/messages`, {
+      headers: { 'Authorization': 'Bearer ' + authToken },
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    chatHistory = data.messages || [];
+    saveChatHistory();
+    renderChatHistory();
+
+    // Update title
+    const conv = conversations.find(c => c.id === convId);
+    if (conv) document.getElementById('chatTitle').textContent = conv.title || 'Yatri AI';
+  } catch {}
+
+  closeChatSidebar();
+  navigate('assistant');
+}
+
+async function newConversation() {
+  currentConvId = null;
+  localStorage.removeItem('yatri_conv_id');
+  chatHistory = [];
+  saveChatHistory();
+  document.getElementById('chatTitle').textContent = 'Yatri AI';
+  const container = document.getElementById('chatMessages');
+  container.innerHTML = '<div class="msg msg-system"><div class="msg-bubble">' + t('welcomeMsg') + '</div></div>';
+
+  // Create on server if logged in
+  if (authToken) {
+    try {
+      const res = await fetch(API + '/api/v1/sessions/conversations', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + authToken },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        currentConvId = data.id;
+        localStorage.setItem('yatri_conv_id', currentConvId);
+      }
+    } catch {}
+  }
+
+  closeChatSidebar();
+  navigate('assistant');
+}
+
+async function deleteConversation(convId) {
+  if (!authToken) return;
+  try {
+    await fetch(API + `/api/v1/sessions/conversations/${convId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + authToken },
+    });
+    if (convId === currentConvId) {
+      currentConvId = null;
+      localStorage.removeItem('yatri_conv_id');
+      chatHistory = [];
+      saveChatHistory();
+      renderChatHistory();
+      document.getElementById('chatTitle').textContent = 'Yatri AI';
+    }
+    loadConversations();
+  } catch {}
+}
+
+// Update logToServer to include conversation_id
+const _origLogToServer = logToServer;
+logToServer = function(queryText, responseText, language, queryType) {
+  if (!authToken) return;
+  fetch(API + '/api/v1/sessions/log', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+    body: JSON.stringify({
+      query_text: queryText, response_text: responseText,
+      language: language || 'en', query_type: queryType || 'text',
+      conversation_id: currentConvId,
+    }),
+  }).then(r => r.json()).then(data => {
+    // Save conversation_id if server created one
+    if (data.conversation_id && !currentConvId) {
+      currentConvId = data.conversation_id;
+      localStorage.setItem('yatri_conv_id', currentConvId);
+      // Update title from first message
+      document.getElementById('chatTitle').textContent = (queryText || 'New Chat').slice(0, 40);
+    }
+  }).catch(() => {});
+};
+
+// Restore chat on page load
+if (chatHistory.length > 0) renderChatHistory();
+// Load from server if logged in
+if (authToken && currentConvId) {
+  loadConversation(currentConvId);
+} else if (authToken) {
+  loadServerHistory();
+}
+
+function quickAsk(text) {
+  document.getElementById('chatInput').value = text;
+  document.getElementById('sendBtn').classList.add('ready');
+  sendText();
 }
 
 function hideWelcome() {
-  if (welcomeScreen) welcomeScreen.style.display = 'none';
+  const w = document.getElementById('chatWelcome');
+  if (w) w.style.display = 'none';
 }
 
-function scrollToBottom() {
-  chatContainer.scrollTop = chatContainer.scrollHeight;
+function setProcessing(on) {
+  isProcessing = on;
+  document.getElementById('typingIndicator').style.display = on ? 'block' : 'none';
+  document.getElementById('micBtn').disabled = on;
+  if (on) document.getElementById('typingIndicator').scrollIntoView({ behavior: 'smooth' });
 }
 
-function addMessage(text, type, lang, audioB64) {
-  hideWelcome();
-  const div = document.createElement('div');
-  div.className = `message ${type}`;
-
-  let html = '';
-  if (lang && type === 'bot') {
-    html += `<div class="lang-tag">${lang}</div>`;
-  }
-  html += `<div>${formatText(text)}</div>`;
-
-  if (audioB64) {
-    const btnId = 'play_' + Date.now();
-    html += `<button class="audio-play" id="${btnId}" onclick="playAudio('${btnId}', '${audioB64}')">&#x1F50A; Play response</button>`;
-  }
-
-  div.innerHTML = html;
-  chatContainer.appendChild(div);
-  scrollToBottom();
-  return div;
-}
-
-function formatText(text) {
-  return text
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br>');
-}
-
-function showTyping() {
-  typingIndicator.style.display = 'block';
-  chatContainer.appendChild(typingIndicator);
-  scrollToBottom();
-}
-function hideTyping() {
-  typingIndicator.style.display = 'none';
-}
-
-function setProcessing(state) {
-  isProcessing = state;
-  micBtn.disabled = state;
-  sendBtn.disabled = state;
-  if (state) showTyping(); else hideTyping();
-}
-
-// Play base64 audio
-function playAudio(btnId, b64) {
-  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
-
-  // Detect format: gTTS returns MP3
-  const audio = new Audio('data:audio/mp3;base64,' + b64);
-  currentAudio = audio;
-
-  const btn = document.getElementById(btnId);
-  if (btn) btn.textContent = '... Playing';
-  audio.onended = () => { if (btn) btn.innerHTML = '&#x1F50A; Play again'; currentAudio = null; };
-  audio.onerror = () => { if (btn) btn.textContent = 'Audio error'; };
-  audio.play().catch(() => { if (btn) btn.textContent = 'Tap again'; });
-}
-
-// Auto-play audio response
-function autoPlayAudio(b64) {
-  if (!b64) return;
-  if (currentAudio) { currentAudio.pause(); }
-  const audio = new Audio('data:audio/mp3;base64,' + b64);
-  currentAudio = audio;
-  audio.play().catch(() => {});
-}
-
-// Text query
+// ═══ TEXT QUERY ═══
 async function sendText() {
-  const text = textInput.value.trim();
+  const text = document.getElementById('chatInput').value.trim();
   if (!text || isProcessing) return;
-
-  textInput.value = '';
-  addMessage(text, 'user');
+  document.getElementById('chatInput').value = '';
+  addMsg('user', text);
   setProcessing(true);
-
   try {
     const res = await fetch(API + '/api/v1/query', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: text, language: getLang() }),
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: text, language: selectedLang === 'auto' ? 'en' : selectedLang }),
     });
     const data = await res.json();
     setProcessing(false);
-
-    // Try to get TTS for the response
     let audioB64 = null;
     try {
-      const ttsRes = await fetch(API + '/api/v1/voice/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: data.response || data.detail, language: data.language || getLang() }),
+      const tts = await fetch(API + '/api/v1/voice/tts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: data.response, language: data.language || 'en' }),
       });
-      if (ttsRes.ok) {
-        const audioBlob = await ttsRes.arrayBuffer();
-        audioB64 = btoa(String.fromCharCode(...new Uint8Array(audioBlob)));
-      }
+      if (tts.ok) { const buf = await tts.arrayBuffer(); audioB64 = btoa(String.fromCharCode(...new Uint8Array(buf))); }
     } catch {}
-
-    addMessage(data.response || data.detail || 'No response', 'bot', data.language, audioB64);
-    if (audioB64) autoPlayAudio(audioB64);
-  } catch (err) {
-    setProcessing(false);
-    addMessage('Could not reach server. Is the API running?', 'system');
-  }
+    addMsg('bot', data.response || 'No response', audioB64, data.language);
+    logToServer(text, data.response || '', data.language || 'en', 'text');
+    if (audioB64) autoPlay(audioB64);
+  } catch { setProcessing(false); addMsg('system', 'Server unavailable. Is the API running?'); }
 }
+document.getElementById('chatInput').addEventListener('input', function() {
+  document.getElementById('sendBtn').classList.toggle('ready', this.value.trim().length > 0);
+});
 
-// Voice recording
-async function toggleRecording() {
+// ═══ VOICE ═══
+async function toggleMic() {
   if (isProcessing) return;
-
-  if (isRecording) {
-    stopRecording();
-  } else {
-    startRecording();
-  }
-}
-
-async function startRecording() {
+  if (isRecording) { mediaRecorder.stop(); isRecording = false; document.getElementById('micBtn').classList.remove('recording'); document.getElementById('micBtn').innerHTML = '<i class="ri-mic-fill"></i>'; return; }
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { sampleRate: 16000, channelCount: 1 }
-    });
-
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, channelCount: 1 } });
     audioChunks = [];
     mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
-
-    mediaRecorder.ondataavailable = (e) => {
-      if (e.data.size > 0) audioChunks.push(e.data);
-    };
-
-    mediaRecorder.onstop = () => {
-      stream.getTracks().forEach(t => t.stop());
-      const blob = new Blob(audioChunks, { type: 'audio/webm' });
-      sendVoice(blob);
-    };
-
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = () => { stream.getTracks().forEach(t => t.stop()); sendVoice(new Blob(audioChunks, { type: 'audio/webm' })); };
     mediaRecorder.start();
     isRecording = true;
-    micBtn.classList.add('recording');
-    micBtn.innerHTML = '&#x23F9;';
-  } catch (err) {
-    addMessage('Microphone access denied. Please allow mic access and try again.', 'system');
-  }
+    document.getElementById('micBtn').classList.add('recording');
+    document.getElementById('micBtn').innerHTML = '<i class="ri-stop-fill"></i>';
+  } catch { addMsg('system', 'Microphone access denied.'); }
 }
 
-function stopRecording() {
-  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-    mediaRecorder.stop();
-  }
-  isRecording = false;
-  micBtn.classList.remove('recording');
-  micBtn.innerHTML = '&#x1F3A4;';
-}
-
-async function sendVoice(audioBlob) {
+async function sendVoice(blob) {
+  addMsg('user', '<i class="ri-mic-fill" style="opacity:0.7"></i> Voice message...');
   setProcessing(true);
-  addMessage('(voice message sent)', 'user');
-
-  const formData = new FormData();
-  formData.append('audio', audioBlob, 'recording.webm');
-  formData.append('language', getLang());
-
+  const form = new FormData();
+  form.append('audio', blob, 'recording.webm');
+  if (selectedLang !== 'auto') form.append('language', selectedLang);
   try {
-    const res = await fetch(API + '/api/v1/voice/input', {
-      method: 'POST',
-      body: formData,
-    });
+    const res = await fetch(API + '/api/v1/voice/input', { method: 'POST', body: form });
     const data = await res.json();
     setProcessing(false);
-
-    // Show transcript
-    if (data.transcript) {
-      const userMsg = chatContainer.querySelector('.message.user:last-of-type');
-      if (userMsg) {
-        userMsg.innerHTML = `<div class="lang-tag">You said (${data.language})</div><div>${formatText(data.transcript)}</div>`;
-      }
-    }
-
-    // Show response with audio
-    addMessage(
-      data.response_text || 'No response',
-      'bot',
-      data.language,
-      data.audio_base64
-    );
-
-    // Auto-play response
-    if (data.audio_base64) autoPlayAudio(data.audio_base64);
-
-  } catch (err) {
-    setProcessing(false);
-    addMessage('Voice processing failed. Please try again.', 'system');
-  }
+    const msgs = document.querySelectorAll('.msg-user');
+    const last = msgs[msgs.length - 1];
+    if (last && data.transcript) last.querySelector('.msg-bubble').innerHTML = data.transcript;
+    addMsg('bot', data.response_text || 'No response', data.audio_base64, data.language);
+    logToServer(data.transcript || 'voice', data.response_text || '', data.language || 'en', 'voice');
+    if (data.audio_base64) autoPlay(data.audio_base64);
+  } catch { setProcessing(false); addMsg('system', 'Voice processing failed.'); }
 }
 
-// Emergency
-async function sendEmergency(scenario) {
-  hideWelcome();
-  setProcessing(true);
+function playB64(btnId, b64) {
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  const a = new Audio('data:audio/mp3;base64,' + b64);
+  currentAudio = a;
+  const btn = document.getElementById(btnId);
+  if (btn) btn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Playing...';
+  a.onended = () => { if (btn) btn.innerHTML = '<i class="ri-volume-up-fill"></i> Play again'; currentAudio = null; };
+  a.play().catch(() => {});
+}
+function autoPlay(b64) {
+  if (currentAudio) currentAudio.pause();
+  const a = new Audio('data:audio/mp3;base64,' + b64);
+  currentAudio = a; a.play().catch(() => {});
+}
 
+// ═══ EMERGENCY ═══
+// SOS_SCENARIOS and HELPLINES declared at top of script
+
+function loadEmergency() {
+  const grid = document.getElementById('sosGrid');
+  grid.innerHTML = SOS_SCENARIOS.map(s => `
+    <div class="sos-card" onclick="triggerSOS('${s.key}')">
+      <div class="sos-icon" style="background:${s.bg};color:${s.color}"><i class="${s.icon}"></i></div>
+      <h3>${s.title}</h3>
+    </div>
+  `).join('');
+  document.getElementById('helplineList').innerHTML = HELPLINES.map(h => `
+    <div class="helpline-item" onclick="window.location.href='tel:${h.num}'">
+      <div class="helpline-icon" style="background:${h.bg};color:${h.color}"><i class="${h.icon}"></i></div>
+      <div class="helpline-info"><div class="name">${h.name}</div><div class="number">${h.num}</div></div>
+      <button class="helpline-call">CALL</button>
+    </div>
+  `).join('');
+}
+
+async function triggerSOS(scenario) {
   try {
     const res = await fetch(API + '/api/v1/emergency', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scenario, language: getLang() }),
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: scenario, language: selectedLang === 'auto' ? 'hi' : selectedLang }),
     });
     const data = await res.json();
-    setProcessing(false);
-
-    let text = data.response || data.instructions || JSON.stringify(data);
-    if (data.helplines) {
-      text += '\n\n**Emergency Numbers:**';
-      for (const [name, num] of Object.entries(data.helplines)) {
-        text += `\n${name}: ${num}`;
-      }
-    }
-    addMessage(text, 'bot', getLang());
+    let html = `<div style="max-width:600px;margin:16px auto;padding:20px;background:white;border:2px solid #FCA5A5;border-radius:16px">
+      <h3 style="color:#DC2626;font-size:16px;margin-bottom:10px"><i class="ri-flashlight-fill"></i> Emergency Response</h3>
+      <p style="font-size:14px;line-height:1.7;color:#333">${(data.response || data.instructions || JSON.stringify(data)).replace(/\n/g, '<br>')}</p></div>`;
+    document.getElementById('sosResponse').innerHTML = html;
   } catch {
-    setProcessing(false);
-    addMessage('Could not get emergency info. Call 112 for immediate help.', 'system');
+    document.getElementById('sosResponse').innerHTML = '<p style="text-align:center;color:#DC2626;padding:20px">Server offline. Call 112 immediately.</p>';
   }
 }
 
-async function showContacts() {
-  hideWelcome();
+// ═══ EXPLORE ═══
+const CATEGORIES = [
+  { key: 'all', label: 'All', icon: 'ri-star-line' },
+  { key: 'temple', label: 'Temples', icon: 'ri-ancient-pavilion-line' },
+  { key: 'ghat', label: 'Ghats', icon: 'ri-water-flash-line' },
+  { key: 'tourist', label: 'Tourist', icon: 'ri-camera-line' },
+  { key: 'winery', label: 'Wineries', icon: 'ri-goblet-line' },
+  { key: 'food', label: 'Food', icon: 'ri-restaurant-line' },
+  { key: 'accommodation', label: 'Hotels', icon: 'ri-hotel-line' },
+  { key: 'transport', label: 'Transport', icon: 'ri-bus-line' },
+  { key: 'emergency', label: 'Emergency', icon: 'ri-heart-pulse-line' },
+  { key: 'market', label: 'Markets', icon: 'ri-shopping-bag-line' },
+];
+// allPlaces and activeFilter declared at top
+
+async function loadPlaces() {
+  allPlaces = [];
+  // Try API first
   try {
-    const res = await fetch(API + '/api/v1/emergency/contacts');
-    const data = await res.json();
-    let text = '**Emergency Helplines:**\n';
-    if (data.helplines) {
-      for (const [k, v] of Object.entries(data.helplines)) {
-        text += `\n${k}: **${v}**`;
+    const data = await (await fetch(API + '/api/v1/places')).json();
+    allPlaces = Array.isArray(data) ? data : data.places || [];
+  } catch {}
+  // Also load from places_geo.json (178 places with full details)
+  try {
+    const geoRes = await fetch(API + '/static/places_geo.json');
+    if (geoRes.ok) {
+      const geoData = await geoRes.json();
+      if (Array.isArray(geoData)) {
+        const existingNames = new Set(allPlaces.map(p => p.name || p.name_en));
+        geoData.forEach(p => {
+          if (!existingNames.has(p.name)) { allPlaces.push(p); existingNames.add(p.name); }
+        });
       }
-    } else {
-      text = JSON.stringify(data, null, 2);
     }
-    addMessage(text, 'bot', getLang());
-  } catch {
-    addMessage('Police: 100 | Ambulance: 108 | Kumbh Helpline: 1800-120-2027', 'system');
+  } catch {}
+  if (allPlaces.length === 0) {
+    allPlaces = [
+      { name:'Ramkund', category:'Ghat', description:'Sacred bathing ghat on Godavari.', timings:'24/7' },
+      { name:'Kalaram Temple', category:'Temple', description:'Famous black stone Ram temple.', timings:'6 AM - 8:30 PM' },
+    ];
   }
+  document.getElementById('placeCount').textContent = allPlaces.length + ' places';
+  document.getElementById('filterBar').innerHTML = CATEGORIES.map(c =>
+    `<div class="filter-chip ${c.key === 'all' ? 'active' : ''}" onclick="filterPlaces('${c.key}',this)"><i class="${c.icon}"></i> ${c.label}</div>`
+  ).join('');
+  renderPlaces();
+}
+
+function filterPlaces(cat, el) {
+  activeFilter = cat;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderPlaces();
+}
+
+// Image keywords for Unsplash-style placeholder by category
+const IMG_KEYWORDS = {
+  temple: ['hindu+temple+india', 'indian+temple+nashik', 'ancient+temple+india'],
+  ghat: ['river+ghat+india', 'godavari+river', 'holy+river+bathing+india'],
+  tourist: ['nashik+india', 'maharashtra+fort', 'indian+caves+ancient'],
+  winery: ['vineyard+india', 'wine+grapes', 'winery+tour'],
+  food: ['indian+street+food', 'misal+pav', 'indian+restaurant'],
+  accommodation: ['indian+hotel', 'dharamshala+india', 'guest+house+india'],
+  transport: ['indian+railway+station', 'bus+stand+india', 'india+transport'],
+  emergency: ['hospital+india', 'ambulance', 'police+india'],
+  market: ['indian+market+bazaar', 'street+market+india', 'shopping+india'],
+};
+function getPlaceImage(p) {
+  const cat = normCat(p.category);
+  const kws = IMG_KEYWORDS[cat] || ['nashik+india'];
+  const kw = kws[Math.abs(hashStr(p.name || '')) % kws.length];
+  const id = Math.abs(hashStr(p.name || 'place')) % 1000;
+  return `https://source.unsplash.com/400x200/?${kw}&sig=${id}`;
+}
+function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0; return h; }
+
+function renderStars(rating) {
+  const r = parseFloat(rating) || 4.0;
+  let html = '';
+  for (let i = 1; i <= 5; i++) {
+    if (i <= Math.floor(r)) html += '<i class="ri-star-fill" style="color:#F59E0B"></i>';
+    else if (i - 0.5 <= r) html += '<i class="ri-star-half-fill" style="color:#F59E0B"></i>';
+    else html += '<i class="ri-star-line" style="color:#E5E7EB"></i>';
+  }
+  return `<span style="display:inline-flex;align-items:center;gap:1px;font-size:12px">${html} <span style="margin-left:4px;font-weight:600;color:var(--ink)">${r.toFixed(1)}</span></span>`;
+}
+
+function renderPlaces() {
+  const filtered = activeFilter === 'all' ? allPlaces : allPlaces.filter(p => (p.category||'').toLowerCase().includes(activeFilter));
+  document.getElementById('placesList').innerHTML = filtered.map((p, i) => {
+    const cat = normCat(p.category);
+    const color = getCatColor(p.category);
+    const icon = getCatIcon(p.category);
+    const name = p.name || p.name_en || 'Unknown';
+    const nameHi = p.name_hi || '';
+    const desc = p.description || p.description_en || '';
+    const img = getPlaceImage(p);
+    const rating = p.rating || (4.0 + (hashStr(name) % 10) / 10).toFixed(1);
+    const lat = p.lat || (p.coordinates && p.coordinates.lat);
+    const lon = p.lon || p.lng || (p.coordinates && (p.coordinates.lon || p.coordinates.lng));
+
+    return `<div class="place-card" onclick="this.querySelector('.place-detail').classList.toggle('open')">
+      <div style="position:relative;height:140px;overflow:hidden;background:linear-gradient(135deg,${color}15,${color}08)">
+        <img src="${img}" alt="${name}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.style.display='none'">
+        <div style="position:absolute;top:8px;left:8px;display:flex;gap:4px">
+          <span style="background:${color};color:white;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;display:flex;align-items:center;gap:3px">
+            <i class="${icon}" style="font-size:11px"></i> ${p.category || 'Place'}
+          </span>
+        </div>
+        ${p.entry_fee ? `<span style="position:absolute;top:8px;right:8px;background:white;color:var(--ink);padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600">${p.entry_fee}</span>` : ''}
+      </div>
+      <div style="padding:12px 14px">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div>
+            <h3 style="font-size:15px;font-weight:700;color:var(--ink)">${name}</h3>
+            ${nameHi ? `<span style="font-size:12px;color:var(--ink-muted)">${nameHi}</span>` : ''}
+          </div>
+          ${renderStars(rating)}
+        </div>
+        <p style="font-size:12px;color:var(--ink-light);margin-top:6px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${desc}</p>
+        <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;font-size:11px;color:var(--ink-muted)">
+          ${p.timings ? `<span style="display:flex;align-items:center;gap:3px"><i class="ri-time-line" style="color:${color}"></i>${p.timings}</span>` : ''}
+          ${p.address ? `<span style="display:flex;align-items:center;gap:3px"><i class="ri-map-pin-line" style="color:${color}"></i>${(p.address||'').slice(0,30)}</span>` : ''}
+          ${p.phone ? `<span style="display:flex;align-items:center;gap:3px"><i class="ri-phone-line" style="color:${color}"></i>${p.phone}</span>` : ''}
+        </div>
+      </div>
+      <div class="place-detail">
+        <div style="padding:0 14px 14px;border-top:1px solid rgba(0,0,0,0.04)">
+          <p style="font-size:13px;color:var(--ink-light);line-height:1.7;margin-top:12px">${desc}</p>
+          ${p.how_to_reach_en ? `<div style="margin-top:10px"><strong style="font-size:11px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:1px">How to Reach</strong><p style="font-size:12px;color:var(--ink-light);margin-top:4px;line-height:1.6">${p.how_to_reach_en}</p></div>` : ''}
+          ${p.tips_en ? `<div style="margin-top:10px"><strong style="font-size:11px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:1px">Tips</strong><p style="font-size:12px;color:var(--ink-light);margin-top:4px;line-height:1.6">${p.tips_en}</p></div>` : ''}
+          <div style="display:flex;gap:8px;margin-top:12px">
+            ${lat && lon ? `<button onclick="event.stopPropagation();navigate('map');setTimeout(()=>{initMap();map.setView([${lat},${lon}],16);showMapCard(allPlaces[${allPlaces.indexOf(p)}]||{name:'${name.replace(/'/g,"\\'")}',lat:${lat},lon:${lon}},${lat},${lon})},200)" style="flex:1;padding:8px;border-radius:8px;background:${color}12;color:${color};border:1px solid ${color}30;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;font-family:inherit"><i class="ri-map-pin-line"></i> View on Map</button>` : ''}
+            ${lat && lon ? `<button onclick="event.stopPropagation();navigate('map');setTimeout(()=>{initMap();routeTo={name:'${name.replace(/'/g,"\\'")}',lat:${lat},lon:${lon}};document.getElementById('routeToInput').value='${name.replace(/'/g,"\\'")}';document.getElementById('routeToInput').classList.add('filled');openRoutePanel()},200)" style="flex:1;padding:8px;border-radius:8px;background:var(--cream);color:var(--ink-light);border:1px solid rgba(0,0,0,0.08);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;font-family:inherit"><i class="ri-route-line"></i> Directions</button>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══ AUTH ═══
+// authToken, currentUser, regLang, LANG_NAMES declared at top of script
+
+// ═══ UI LOCALIZATION ═══
+const UI_STRINGS = {
+  en: { home:'Home', askAi:'Ask AI', explore:'Explore', map:'Map', sos:'SOS', profile:'Profile', signIn:'Sign In', signOut:'Sign Out',
+    heroTitle:'Your <span>Kumbh Mela</span> Companion', heroSub:'Speak in Hindi, Marathi, or any language. Get instant answers about schedules, ghats, transport, food, and emergencies.',
+    startTalking:'Start Talking', quickActions:'Quick Actions', voiceAssistant:'Voice Assistant', askAnything:'Ask anything',
+    kumbhSchedule:'Kumbh Schedule', datesEvents:'Dates & events', explorePlaces:'Explore Places', templesGhats:'Temples & ghats',
+    emergencySOS:'Emergency SOS', instantHelp:'Instant help', transport:'Transport', routesTrains:'Routes & trains',
+    foodWine:'Food & Wine', misalWineries:'Misal, wineries', getDirections:'Get Directions', navigate:'Navigate',
+    typeQuestion:'Type your question...', searchPlaces:'Search places on map...', noLocation:'Not set',
+    changeLocation:'Change', showOnMap:'Show on Map', directions:'Directions', viewOnMap:'View on Map',
+    distance:'Distance', estTime:'Est. Time', from:'From', to:'To', emergency:'Emergency SOS',
+    instantHelpNoDelay:'Instant help — no AI delay', call112:'Call 112 Emergency', loadingPlaces:'Loading places...',
+    welcomeMsg:'Tap the mic and speak in any language. I\'ll auto-detect and respond.',
+    guestYatri:'Guest Yatri', notSignedIn:'Not signed in', createAccount:'Create Account',
+    welcomeBack:'Welcome Back', joinYatri:'Join Yatri AI', kumbhCompanion:'Your Kumbh Mela companion', signInAccount:'Sign in to your Yatri account',
+  },
+  hi: { home:'होम', askAi:'AI से पूछें', explore:'खोजें', map:'नक्शा', sos:'SOS', profile:'प्रोफाइल', signIn:'साइन इन', signOut:'साइन आउट',
+    heroTitle:'आपका <span>कुंभ मेला</span> साथी', heroSub:'हिंदी, मराठी या किसी भी भाषा में बोलें। शेड्यूल, घाट, ट्रांसपोर्ट, खाना और इमरजेंसी के बारे में तुरंत जवाब पाएं।',
+    startTalking:'बात शुरू करें', quickActions:'त्वरित कार्य', voiceAssistant:'वॉइस असिस्टेंट', askAnything:'कुछ भी पूछें',
+    kumbhSchedule:'कुंभ शेड्यूल', datesEvents:'तारीखें और कार्यक्रम', explorePlaces:'स्थान खोजें', templesGhats:'मंदिर और घाट',
+    emergencySOS:'आपातकालीन SOS', instantHelp:'तुरंत सहायता', transport:'परिवहन', routesTrains:'मार्ग और ट्रेन',
+    foodWine:'खाना और वाइन', misalWineries:'मिसल, वाइनरी', getDirections:'रास्ता दिखाएं', navigate:'नेविगेट',
+    typeQuestion:'अपना सवाल लिखें...', searchPlaces:'नक्शे पर खोजें...', noLocation:'सेट नहीं',
+    changeLocation:'बदलें', showOnMap:'नक्शे पर देखें', directions:'रास्ता', viewOnMap:'नक्शे पर देखें',
+    distance:'दूरी', estTime:'अनु. समय', from:'से', to:'तक', emergency:'आपातकालीन SOS',
+    instantHelpNoDelay:'तुरंत सहायता — बिना देरी', call112:'112 पर कॉल करें', loadingPlaces:'स्थान लोड हो रहे हैं...',
+    welcomeMsg:'माइक दबाएं और किसी भी भाषा में बोलें। मैं ऑटो-डिटेक्ट करूंगा।',
+    guestYatri:'अतिथि यात्री', notSignedIn:'साइन इन नहीं', createAccount:'खाता बनाएं',
+    welcomeBack:'वापस स्वागत है', joinYatri:'Yatri AI से जुड़ें', kumbhCompanion:'आपका कुंभ मेला साथी', signInAccount:'अपने Yatri खाते में साइन इन करें',
+  },
+  mr: { home:'होम', askAi:'AI ला विचारा', explore:'शोधा', map:'नकाशा', sos:'SOS', profile:'प्रोफाइल', signIn:'साइन इन', signOut:'साइन आउट',
+    heroTitle:'तुमचा <span>कुंभ मेळा</span> साथी', heroSub:'हिंदी, मराठी किंवा कोणत्याही भाषेत बोला. वेळापत्रक, घाट, वाहतूक, खाद्य आणि आणीबाणीबद्दल त्वरित उत्तरे मिळवा.',
+    startTalking:'बोलायला सुरुवात करा', quickActions:'जलद कृती', voiceAssistant:'व्हॉइस असिस्टंट', askAnything:'काहीही विचारा',
+    kumbhSchedule:'कुंभ वेळापत्रक', datesEvents:'तारखा आणि कार्यक्रम', explorePlaces:'ठिकाणे शोधा', templesGhats:'मंदिरे आणि घाट',
+    emergencySOS:'आणीबाणी SOS', instantHelp:'तात्काळ मदत', transport:'वाहतूक', routesTrains:'मार्ग आणि रेल्वे',
+    foodWine:'खाद्य आणि वाइन', misalWineries:'मिसळ, वाइनरी', getDirections:'मार्ग दाखवा', navigate:'नेव्हिगेट',
+    typeQuestion:'तुमचा प्रश्न लिहा...', searchPlaces:'नकाशावर शोधा...', noLocation:'सेट नाही',
+    changeLocation:'बदला', showOnMap:'नकाशावर पहा', directions:'मार्ग', viewOnMap:'नकाशावर पहा',
+    distance:'अंतर', estTime:'अंदाज वेळ', from:'पासून', to:'पर्यंत', emergency:'आणीबाणी SOS',
+    instantHelpNoDelay:'तात्काळ मदत — विलंब नाही', call112:'112 वर कॉल करा', loadingPlaces:'ठिकाणे लोड होत आहेत...',
+    welcomeMsg:'माइक दाबा आणि कोणत्याही भाषेत बोला. मी ऑटो-डिटेक्ट करेन.',
+    guestYatri:'अतिथी यात्री', notSignedIn:'साइन इन नाही', createAccount:'खाते बनवा',
+    welcomeBack:'पुन्हा स्वागत', joinYatri:'Yatri AI मध्ये सामील व्हा', kumbhCompanion:'तुमचा कुंभ मेळा साथी', signInAccount:'तुमच्या Yatri खात्यात साइन इन करा',
+  },
+};
+// Fallback to English for unsupported languages
+function t(key) {
+  const lang = localStorage.getItem('yatri_ui_lang') || 'en';
+  return (UI_STRINGS[lang] && UI_STRINGS[lang][key]) || UI_STRINGS.en[key] || key;
+}
+
+function setUILanguage(lang) {
+  localStorage.setItem('yatri_ui_lang', lang);
+  // Update all [data-i18n] elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const val = t(key);
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = val;
+    else if (key === 'heroTitle') el.innerHTML = val;
+    else el.textContent = val;
+  });
+}
+
+// Apply saved UI language on load
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('yatri_ui_lang');
+  if (saved) setUILanguage(saved);
+});
+
+function selectRegLang(lang, el) {
+  regLang = lang;
+  document.querySelectorAll('#regLangRow .auth-lang-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+async function handleLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPassword').value;
+  const err = document.getElementById('loginError');
+  err.classList.remove('show');
+  if (!email || !pass) { err.textContent = 'Please fill all fields'; err.classList.add('show'); return; }
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  document.getElementById('loginBtnText').textContent = 'Signing in...';
+  try {
+    const res = await fetch(API + '/api/v1/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.toLowerCase(), password: pass }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Login failed');
+    authToken = data.token;
+    currentUser = data.user;
+    localStorage.setItem('yatri_token', authToken);
+    localStorage.setItem('yatri_user', JSON.stringify(currentUser));
+    updateAuthUI();
+    loadServerHistory(); // restore chat from server
+    navigate('home');
+  } catch (e) {
+    err.textContent = e.message; err.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('loginBtnText').textContent = 'Sign In';
+  }
+}
+
+async function handleRegister() {
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pass = document.getElementById('regPassword').value;
+  const err = document.getElementById('registerError');
+  err.classList.remove('show');
+  if (!name || !email || !pass) { err.textContent = 'Please fill all fields'; err.classList.add('show'); return; }
+  if (pass.length < 6) { err.textContent = 'Password must be at least 6 characters'; err.classList.add('show'); return; }
+  const btn = document.getElementById('regBtn');
+  btn.disabled = true;
+  document.getElementById('regBtnText').textContent = 'Creating account...';
+  try {
+    const res = await fetch(API + '/api/v1/auth/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email: email.toLowerCase(), password: pass, preferred_language: regLang }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Registration failed');
+    authToken = data.token;
+    currentUser = data.user;
+    localStorage.setItem('yatri_token', authToken);
+    localStorage.setItem('yatri_user', JSON.stringify(currentUser));
+    updateAuthUI();
+    navigate('home');
+  } catch (e) {
+    err.textContent = e.message; err.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    document.getElementById('regBtnText').textContent = 'Create Account';
+  }
+}
+
+function handleLogout() {
+  authToken = null; currentUser = null;
+  localStorage.removeItem('yatri_token');
+  localStorage.removeItem('yatri_user');
+  updateAuthUI();
+  navigate('home');
+}
+
+async function updateLangPref(lang) {
+  // Always update UI language (even for guests)
+  setUILanguage(lang);
+
+  if (!authToken) return;
+  try {
+    const res = await fetch(API + '/api/v1/auth/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+      body: JSON.stringify({ preferred_language: lang }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      currentUser = data;
+      localStorage.setItem('yatri_user', JSON.stringify(currentUser));
+      updateAuthUI();
+    }
+  } catch {}
+}
+
+function updateAuthUI() {
+  const signInBtn = document.getElementById('navSignIn');
+  const userBtn = document.getElementById('navUserBtn');
+
+  if (currentUser) {
+    signInBtn.style.display = 'none';
+    userBtn.style.display = 'flex';
+    const initials = currentUser.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    document.getElementById('navUserName').textContent = currentUser.name.split(' ')[0];
+    document.getElementById('navUserAvatar').textContent = initials;
+
+    // Profile page
+    document.getElementById('profileAvatar').textContent = initials;
+    document.getElementById('profileName').textContent = currentUser.name;
+    document.getElementById('profileEmail').textContent = currentUser.email;
+    document.getElementById('profileLang').textContent = LANG_NAMES[currentUser.preferred_language] || currentUser.preferred_language;
+
+    // Profile lang chips
+    const langRow = document.getElementById('profileLangRow');
+    langRow.innerHTML = Object.entries(LANG_NAMES).map(([code, name]) =>
+      `<div class="auth-lang-chip ${currentUser.preferred_language === code ? 'active' : ''}" onclick="updateLangPref('${code}');this.parentElement.querySelectorAll('.auth-lang-chip').forEach(c=>c.classList.remove('active'));this.classList.add('active')">${name}</div>`
+    ).join('');
+
+    // Profile actions
+    document.getElementById('profileActions').innerHTML =
+      `<button class="profile-btn profile-btn-danger" onclick="handleLogout()"><i class="ri-logout-box-r-line"></i> Sign Out</button>`;
+
+    // Load stats
+    loadProfileStats();
+  } else {
+    signInBtn.style.display = 'flex';
+    userBtn.style.display = 'none';
+    document.getElementById('profileAvatar').textContent = 'G';
+    document.getElementById('profileName').textContent = 'Guest Yatri';
+    document.getElementById('profileEmail').textContent = 'Not signed in';
+    document.getElementById('profileLang').textContent = '';
+    document.getElementById('profileLangRow').innerHTML = '';
+    document.getElementById('profileActions').innerHTML =
+      `<button class="profile-btn profile-btn-primary" onclick="navigate('login')"><i class="ri-login-box-line"></i> Sign In</button>
+       <button class="profile-btn" style="background:var(--cream);color:var(--ink);margin-top:8px;border:1px solid rgba(0,0,0,0.08)" onclick="navigate('register')"><i class="ri-user-add-line"></i> Create Account</button>`;
+  }
+
+  // Update server info on profile page
+  if (document.getElementById('page-profile').classList.contains('active')) loadProfileServer();
+}
+
+async function loadProfileStats() {
+  if (!authToken) return;
+  try {
+    const res = await fetch(API + '/api/v1/sessions/stats', {
+      headers: { 'Authorization': 'Bearer ' + authToken },
+    });
+    if (res.ok) {
+      const d = await res.json();
+      document.getElementById('statQueries').textContent = d.total_queries || 0;
+      document.getElementById('statLangs').textContent = (d.languages_used || []).length;
+      document.getElementById('statFavs').textContent = d.favorite_places || 0;
+    }
+  } catch {}
+}
+
+async function loadProfileServer() {
+  try {
+    const r = await fetch(API + '/api/v1/health');
+    const d = await r.json();
+    document.getElementById('piServer').innerHTML = '<span class="status-dot online" style="display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px"></span> Online';
+    document.getElementById('piModel').textContent = d.model || '-';
+    document.getElementById('piDocs').textContent = d.total_documents || '-';
+  } catch {
+    document.getElementById('piServer').innerHTML = '<span class="status-dot offline" style="display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px"></span> Offline';
+  }
+}
+
+// Add profile to mobile nav
+const mobileNav = document.querySelector('.mobile-nav');
+const profileBtn = document.createElement('button');
+profileBtn.dataset.page = 'profile';
+profileBtn.innerHTML = '<i class="ri-user-3-line"></i> Profile';
+profileBtn.addEventListener('click', () => navigate('profile'));
+mobileNav.appendChild(profileBtn);
+
+// Add profile to desktop nav
+const navLinks = document.querySelector('.nav-links');
+const profileNavLink = document.createElement('button');
+profileNavLink.className = 'nav-link';
+profileNavLink.dataset.page = 'profile';
+profileNavLink.innerHTML = '<i class="ri-user-3-line"></i> Profile';
+profileNavLink.addEventListener('click', () => navigate('profile'));
+navLinks.appendChild(profileNavLink);
+
+// Override navigate to handle auth pages
+const _origNavigate = navigate;
+navigate = function(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const el = document.getElementById('page-' + page);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.nav-link, .mobile-nav button').forEach(b => {
+    b.classList.toggle('active', b.dataset.page === page);
+  });
+  if (page === 'explore' && !document.getElementById('placesList').children.length) loadPlaces();
+  if (page === 'emergency' && !document.getElementById('sosGrid').children.length) loadEmergency();
+  if (page === 'profile') { updateAuthUI(); loadProfileServer(); }
+};
+
+// Init
+updateAuthUI();
+try { loadEmergency(); } catch(e) { console.error('loadEmergency error:', e); }
+// Pre-load places for explore page
+loadPlaces().catch(e => console.error('loadPlaces error:', e));
+// Apply saved language or user preference
+const savedUILang = localStorage.getItem('yatri_ui_lang') || (currentUser && currentUser.preferred_language) || null;
+if (savedUILang && savedUILang !== 'en') setUILanguage(savedUILang);
+</script>
+
+<!-- Leaflet + Routing -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+<script>
+// ═══ MAP MODULE ═══
+let map = null, mapMarkers = [], mapPlaces = [], activeMapFilter = 'all';
+let selectedPlace = null, routeControl = null, userMarker = null, userLatLng = null;
+
+const MAP_CATS = [
+  { key: 'all', label: 'All', icon: 'ri-star-line' },
+  { key: 'temple', label: 'Temples', icon: 'ri-ancient-pavilion-line', color: '#E8652B' },
+  { key: 'ghat', label: 'Ghats', icon: 'ri-water-flash-line', color: '#2E86AB' },
+  { key: 'tourist', label: 'Tourist', icon: 'ri-camera-line', color: '#7C3AED' },
+  { key: 'winery', label: 'Wineries', icon: 'ri-goblet-line', color: '#D97706' },
+  { key: 'transport', label: 'Transport', icon: 'ri-bus-line', color: '#059669' },
+  { key: 'accommodation', label: 'Hotels', icon: 'ri-hotel-line', color: '#6366F1' },
+  { key: 'food', label: 'Food', icon: 'ri-restaurant-line', color: '#EC4899' },
+  { key: 'emergency', label: 'Emergency', icon: 'ri-heart-pulse-line', color: '#DC2626' },
+  { key: 'market', label: 'Markets', icon: 'ri-shopping-bag-line', color: '#0891B2' },
+];
+// normCat, getCatColor, getCatIcon already defined in first script block
+
+function createMarkerIcon(cat) {
+  const color = getCatColor(cat);
+  const icon = getCatIcon(cat);
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:36px;height:36px;border-radius:50% 50% 50% 0;background:${color};transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px ${color}66;border:2px solid white">
+      <i class="${icon}" style="transform:rotate(45deg);color:white;font-size:16px"></i>
+    </div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+    popupAnchor: [0, -36],
+  });
+}
+
+function initMap() {
+  if (map) return;
+
+  map = L.map('mapContainer', {
+    center: [19.9975, 73.7898], // Nashik center
+    zoom: 13,
+    zoomControl: false,
+  });
+
+  // Beautiful map tiles
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19,
+  }).addTo(map);
+
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+  // Render filter chips
+  document.getElementById('mapFilters').innerHTML = MAP_CATS.map(c =>
+    `<div class="map-filter-chip ${c.key === 'all' ? 'active' : ''}" data-cat="${c.key}" onclick="setMapFilter('${c.key}',this)">
+      <i class="${c.icon}"></i> ${c.label}
+    </div>`
+  ).join('');
+
+  loadMapPlaces();
+}
+
+async function loadMapPlaces() {
+  // Load from data files + API
+  try {
+    const res = await fetch(API + '/api/v1/places');
+    const data = await res.json();
+    mapPlaces = Array.isArray(data) ? data : data.places || [];
+  } catch {}
+
+  // Also load from nashik_complete_places.json for coordinates
+  try {
+    const res = await fetch(API + '/static/places_geo.json');
+    if (res.ok) {
+      const extra = await res.json();
+      if (Array.isArray(extra)) mapPlaces = [...mapPlaces, ...extra];
+    }
+  } catch {}
+
+  // Fallback with hardcoded Nashik landmarks if API fails
+  if (mapPlaces.length === 0) {
+    mapPlaces = [
+      { name: 'Ramkund', category: 'ghat', lat: 20.0063, lon: 73.7920, description: 'Sacred bathing ghat on Godavari. Main Kumbh Mela site.', timings: '24/7' },
+      { name: 'Kalaram Temple', category: 'temple', lat: 20.0082, lon: 73.7895, description: 'Famous black stone Ram temple in Panchavati.', timings: '6 AM - 8:30 PM' },
+      { name: 'Trimbakeshwar', category: 'temple', lat: 19.9323, lon: 73.5311, description: 'One of 12 Jyotirlinga temples. Source of Godavari.', timings: '5:30 AM - 9 PM' },
+      { name: 'Saptashrungi Devi', category: 'temple', lat: 20.3893, lon: 73.8992, description: 'One of 3.5 Shakti Peethas. 108 steps to temple.', timings: '5 AM - 9 PM' },
+      { name: 'Pandav Leni Caves', category: 'tourist', lat: 19.9838, lon: 73.7649, description: '24 ancient Buddhist caves from 1st century BCE.', timings: '9 AM - 6 PM', entry_fee: '₹25' },
+      { name: 'Sula Vineyards', category: 'winery', lat: 20.0268, lon: 73.6625, description: "India's premier wine estate.", timings: '11 AM - 11 PM', entry_fee: '₹400' },
+      { name: 'Tapovan', category: 'temple', lat: 20.0123, lon: 73.7832, description: 'Where Laxman cut Surpanakha nose. Hot springs.', timings: '24/7' },
+      { name: 'Muktidham', category: 'temple', lat: 19.9696, lon: 73.7622, description: 'White marble temple with 18 chapters of Gita on walls.', timings: '6 AM - 9 PM' },
+      { name: 'Someshwar Waterfall', category: 'tourist', lat: 19.9478, lon: 73.8018, description: 'Beautiful waterfall near Gangapur Road.', timings: 'Monsoon season' },
+      { name: 'Anjaneri Hill', category: 'tourist', lat: 19.9531, lon: 73.5623, description: 'Birthplace of Hanuman. 4400ft trek.', timings: 'Sunrise trek recommended' },
+      { name: 'Nashik Road Railway', category: 'transport', lat: 19.9687, lon: 73.8099, description: 'Main railway station. Mumbai/Pune/Delhi trains.', timings: '24/7' },
+      { name: 'CBS Bus Stand', category: 'transport', lat: 19.9964, lon: 73.7816, description: 'Central Bus Stand. MSRTC to all cities.', timings: '5 AM - 11 PM' },
+      { name: 'Nashik Ozar Airport', category: 'transport', lat: 20.1189, lon: 73.9091, description: 'Domestic airport. IndiGo, Air India flights.', timings: '24/7' },
+      { name: 'York Winery', category: 'winery', lat: 20.0195, lon: 73.6545, description: 'Premium wines with Italian restaurant.', timings: '11 AM - 10 PM' },
+      { name: 'Sita Gufa', category: 'temple', lat: 20.0095, lon: 73.7898, description: 'Underground cave where Sita is said to have hidden.', timings: '8 AM - 6 PM' },
+      { name: 'Coin Museum', category: 'tourist', lat: 20.0050, lon: 73.5550, description: 'Unique museum showcasing history of Indian coinage.', timings: '10 AM - 5 PM' },
+      { name: 'Harihar Fort', category: 'tourist', lat: 19.8836, lon: 73.6782, description: 'Thrilling vertical rock-cut steps. Advanced trek.', timings: 'Dawn to dusk' },
+      { name: 'Ramshej Fort', category: 'tourist', lat: 20.0327, lon: 73.6815, description: 'Popular night trek. Easy difficulty.', timings: '24/7 (night treks popular)' },
+      { name: 'Gondeshwar Temple', category: 'temple', lat: 19.8445, lon: 73.8812, description: 'Hemadpanthi architecture. 5 shrines. Sinnar.', timings: '6 AM - 8 PM' },
+      { name: 'Gangapur Dam', category: 'tourist', lat: 19.9427, lon: 73.8321, description: 'Major dam on Godavari. Boating and sunset views.', timings: '9 AM - 6 PM' },
+      { name: 'Dwarka Circle', category: 'transport', lat: 19.9892, lon: 73.7754, description: 'Major traffic junction. Auto rickshaw hub.', timings: '24/7' },
+      { name: 'Panchavati', category: 'temple', lat: 20.0075, lon: 73.7890, description: 'Five banyan trees area. Ram lived here during exile.', timings: '24/7' },
+      { name: 'Naroshankar Temple', category: 'temple', lat: 20.0055, lon: 73.7912, description: 'Famous bell temple on Godavari bank.', timings: '6 AM - 9 PM' },
+      { name: 'Civil Hospital', category: 'hospital', lat: 19.9890, lon: 73.7960, description: 'Government hospital. Emergency services 24/7.' },
+      { name: 'Bytco Hospital', category: 'hospital', lat: 19.9832, lon: 73.7925, description: 'Multi-specialty private hospital.' },
+    ];
+  }
+
+  addMapMarkers();
+}
+
+function addMapMarkers() {
+  // Clear existing
+  mapMarkers.forEach(m => map.removeLayer(m));
+  mapMarkers = [];
+
+  const filtered = activeMapFilter === 'all' ? mapPlaces :
+    mapPlaces.filter(p => normCat(p.category) === activeMapFilter);
+
+  filtered.forEach(place => {
+    const lat = place.lat || (place.coordinates && place.coordinates.lat);
+    const lon = place.lon || place.lng || (place.coordinates && (place.coordinates.lon || place.coordinates.lng));
+    if (!lat || !lon) return;
+
+    const marker = L.marker([lat, lon], { icon: createMarkerIcon(place.category || '') })
+      .addTo(map);
+
+    marker.on('click', () => showMapCard(place, lat, lon));
+
+    // Simple popup on hover
+    marker.bindTooltip(place.name || place.name_en || 'Unknown', {
+      direction: 'top', offset: [0, -36],
+      className: 'leaflet-tooltip',
+    });
+
+    marker._placeData = place;
+    mapMarkers.push(marker);
+  });
+}
+
+function showMapCard(place, lat, lon) {
+  selectedPlace = { ...place, lat, lon };
+  document.getElementById('mpcName').textContent = place.name || place.name_en || '';
+  document.getElementById('mpcCat').textContent = place.category || 'Place';
+  document.getElementById('mpcDesc').textContent = (place.description || place.description_en || '').slice(0, 200);
+
+  let meta = '';
+  if (place.timings) meta += `<span><i class="ri-time-line"></i> ${place.timings}</span>`;
+  if (place.entry_fee) meta += `<span><i class="ri-ticket-line"></i> ${place.entry_fee}</span>`;
+  meta += `<span><i class="ri-map-pin-line"></i> ${lat.toFixed(4)}, ${lon.toFixed(4)}</span>`;
+  document.getElementById('mpcMeta').innerHTML = meta;
+
+  document.getElementById('mapPlaceCard').classList.add('show');
+  map.panTo([lat, lon], { animate: true });
+}
+
+function closeMapCard() {
+  document.getElementById('mapPlaceCard').classList.remove('show');
+  selectedPlace = null;
+  if (routeControl) { map.removeControl(routeControl); routeControl = null; }
+}
+
+function routeToSelected() {
+  if (!selectedPlace) return;
+  const dest = L.latLng(selectedPlace.lat, selectedPlace.lon);
+
+  // Remove old route
+  if (routeControl) { try { map.removeControl(routeControl); } catch(e){} routeControl = null; }
+
+  if (userLatLng) {
+    drawRoute(userLatLng, dest);
+  } else {
+    // No location set — open route panel so user can pick start
+    routeTo = { name: selectedPlace.name || selectedPlace.name_en, lat: selectedPlace.lat, lon: selectedPlace.lon };
+    document.getElementById('routeToInput').value = routeTo.name;
+    document.getElementById('routeToInput').classList.add('filled');
+    document.getElementById('mapPlaceCard').classList.remove('show');
+    openRoutePanel();
+    return;
+  }
+}
+
+function placeUserMarker(latlng, label) {
+  if (userMarker) map.removeLayer(userMarker);
+  userMarker = L.circleMarker(latlng, {
+    radius: 9, fillColor: '#4285F4', fillOpacity: 1,
+    color: 'white', weight: 3,
+  }).addTo(map).bindTooltip(label || 'Your location');
+}
+
+function drawRoute(from, to) {
+  // Close place card first
+  document.getElementById('mapPlaceCard').classList.remove('show');
+
+  try {
+    routeControl = L.Routing.control({
+      waypoints: [from, to],
+      router: L.Routing.osrmv1({
+        serviceUrl: 'https://router.project-osrm.org/route/v1',
+        profile: 'driving',
+      }),
+      lineOptions: {
+        styles: [{ color: '#E8652B', weight: 5, opacity: 0.8 }],
+        addWaypoints: false,
+      },
+      show: true,
+      addWaypoints: false,
+      routeWhileDragging: false,
+      fitSelectedRoutes: true,
+      showAlternatives: false,
+      createMarker: function(i, wp) {
+        const isStart = i === 0;
+        return L.circleMarker(wp.latLng, {
+          radius: isStart ? 8 : 10,
+          fillColor: isStart ? '#4285F4' : '#E8652B',
+          fillOpacity: 1, color: 'white', weight: 3,
+        }).bindTooltip(isStart ? 'Start' : 'Destination');
+      },
+    }).addTo(map);
+
+    // Capture route result and show in our panel
+    routeControl.on('routesfound', function(e) {
+      const route = e.routes[0];
+      if (!route) return;
+      const km = (route.summary.totalDistance / 1000).toFixed(1);
+      const mins = Math.round(route.summary.totalTime / 60);
+
+      let stepsHtml = route.instructions
+        ? route.instructions.slice(0, 10).map((inst, i) =>
+          `<div style="display:flex;gap:8px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,0.04);font-size:12px">
+            <span style="color:var(--saffron);font-weight:700;min-width:20px">${i+1}</span>
+            <span style="color:var(--ink-light)">${inst.text}</span>
+            <span style="margin-left:auto;color:var(--ink-muted);white-space:nowrap">${inst.distance > 0 ? (inst.distance/1000).toFixed(1)+'km' : ''}</span>
+          </div>`
+        ).join('') : '';
+
+      document.getElementById('routeInfo').innerHTML = `
+        <div style="display:flex;gap:16px;margin-bottom:${stepsHtml ? '10px' : '0'}">
+          <div><div class="ri-label">Distance</div><div class="ri-value">${km} km</div></div>
+          <div><div class="ri-label">Est. Time</div><div class="ri-value">~${mins} min</div></div>
+        </div>
+        ${stepsHtml ? '<div style="font-size:11px;font-weight:600;color:var(--ink-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Directions</div>' + stepsHtml : ''}`;
+      document.getElementById('routeInfo').classList.add('show');
+    });
+
+    // Handle routing errors
+    routeControl.on('routingerror', function(e) {
+      console.warn('Routing error:', e.error);
+      // Fallback: draw a straight line
+      const line = L.polyline([from, to], {
+        color: '#E8652B', weight: 4, opacity: 0.6, dashArray: '10, 10'
+      }).addTo(map);
+      map.fitBounds(line.getBounds(), { padding: [50, 50] });
+      mapMarkers.push(line); // so it gets cleaned up later
+
+      // Show distance
+      const dist = from.distanceTo(to);
+      const km = (dist / 1000).toFixed(1);
+      L.popup()
+        .setLatLng(L.latLng((from.lat + to.lat)/2, (from.lng + to.lng)/2))
+        .setContent(`<b>~${km} km</b> (straight line)<br><small>Road routing unavailable</small>`)
+        .openOn(map);
+    });
+  } catch(e) {
+    console.error('Route draw error:', e);
+    // Simple fallback
+    map.fitBounds(L.latLngBounds(from, to), { padding: [50, 50] });
+  }
+}
+
+function locateMe() {
+  const btn = document.getElementById('mapLocateBtn');
+  btn.classList.add('active');
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      userLatLng = L.latLng(pos.coords.latitude, pos.coords.longitude);
+      if (userMarker) map.removeLayer(userMarker);
+      userMarker = L.circleMarker(userLatLng, {
+        radius: 8, fillColor: '#4285F4', fillOpacity: 1,
+        color: 'white', weight: 3,
+      }).addTo(map).bindTooltip('You are here').openTooltip();
+      map.setView(userLatLng, 15, { animate: true });
+      btn.classList.remove('active');
+    },
+    () => {
+      alert('Location access denied. Please set location manually using the pin button.');
+      map.setView([19.9975, 73.7898], 13, { animate: true });
+      btn.classList.remove('active');
+    }
+  );
+}
+
+function toggleMapFilters() {
+  document.getElementById('mapFilters').classList.toggle('open');
+  document.getElementById('mapFilterToggle').classList.toggle('active');
+}
+
+function setMapFilter(cat, el) {
+  activeMapFilter = cat;
+  document.querySelectorAll('.map-filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  addMapMarkers();
+}
+
+function filterMapMarkers(query) {
+  if (!query.trim()) { addMapMarkers(); return; }
+  const q = query.toLowerCase();
+  mapMarkers.forEach(m => {
+    const p = m._placeData;
+    const match = (p.name || p.name_en || '').toLowerCase().includes(q) ||
+                  (p.category || '').toLowerCase().includes(q);
+    if (match) { m.addTo(map); } else { map.removeLayer(m); }
+  });
+}
+
+// ═══ ROUTE PANEL (From → To) ═══
+let routeFrom = null; // {name, lat, lon}
+let routeTo = null;
+let routePickerTarget = null; // 'from' or 'to'
+let routePinResolve = null; // for map pin pick
+
+function openRoutePanel() {
+  document.getElementById('routePanel').classList.add('open');
+  document.getElementById('mapPlaceCard').classList.remove('show');
+  document.querySelector('.map-header').style.display = 'none';
+  document.getElementById('mapFilters').classList.remove('open');
+  // If user has location set, prefill From
+  if (userLatLng && !routeFrom) {
+    routeFrom = { name: userLocationName || 'My Location', lat: userLatLng.lat, lon: userLatLng.lng };
+    document.getElementById('routeFromInput').value = routeFrom.name;
+    document.getElementById('routeFromInput').classList.add('filled');
+  }
+  checkRouteReady();
+}
+
+function closeRoutePanel() {
+  document.getElementById('routePanel').classList.remove('open');
+  document.getElementById('routePicker').classList.remove('open');
+  document.getElementById('routeInfo').classList.remove('show');
+  document.querySelector('.map-header').style.display = 'flex';
+  // Clear route from map
+  if (routeControl) { try { map.removeControl(routeControl); } catch(e){} routeControl = null; }
+  routeFrom = null; routeTo = null;
+  document.getElementById('routeFromInput').value = '';
+  document.getElementById('routeToInput').value = '';
+  document.getElementById('routeFromInput').classList.remove('filled');
+  document.getElementById('routeToInput').classList.remove('filled');
+}
+
+function routeToPlace() {
+  // Called from place card — set destination and open route panel
+  if (!selectedPlace) return;
+  routeTo = { name: selectedPlace.name || selectedPlace.name_en, lat: selectedPlace.lat, lon: selectedPlace.lon };
+  document.getElementById('routeToInput').value = routeTo.name;
+  document.getElementById('routeToInput').classList.add('filled');
+  document.getElementById('mapPlaceCard').classList.remove('show');
+  openRoutePanel();
+}
+
+function openRoutePicker(target) {
+  routePickerTarget = target;
+  document.getElementById('routePickerSearch').value = '';
+  document.getElementById('routePicker').classList.add('open');
+  document.getElementById('routePickerSearch').focus();
+  renderRoutePicker('');
+}
+
+function renderRoutePicker(query) {
+  const q = query.toLowerCase();
+  let allLocs = [...LANDMARKS];
+  if (mapPlaces.length > 0) {
+    mapPlaces.forEach(p => {
+      const lat = p.lat || (p.coordinates && p.coordinates.lat);
+      const lon = p.lon || p.lng || (p.coordinates && (p.coordinates.lon || p.coordinates.lng));
+      if (lat && lon && !allLocs.find(l => l.name === (p.name || p.name_en))) {
+        allLocs.push({ name: p.name || p.name_en, cat: p.category || 'place', lat, lon });
+      }
+    });
+  }
+  const filtered = q ? allLocs.filter(l => l.name.toLowerCase().includes(q)) : allLocs.slice(0, 25);
+
+  let html = `<div class="rp-gps-option" onclick="routePickGPS()"><i class="ri-focus-3-line"></i> Use my current GPS location</div>`;
+  html += `<div class="rp-pin-option" onclick="routePickFromMap()"><i class="ri-map-pin-add-line"></i> Pick on map</div>`;
+  html += filtered.map(l => `
+    <div class="rp-option" onclick="routePickPlace('${l.name.replace(/'/g,"\\'")}',${l.lat},${l.lon})">
+      <div class="rp-option-icon" style="background:${getCatColor(l.cat)}15;color:${getCatColor(l.cat)}">
+        <i class="${getCatIcon(l.cat)}"></i>
+      </div>
+      <div>
+        <h4>${l.name}</h4>
+        <p>${l.cat || 'place'}</p>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('routePickerOptions').innerHTML = html;
+}
+
+function filterRoutePicker(q) { renderRoutePicker(q); }
+
+function routePickPlace(name, lat, lon) {
+  const loc = { name, lat, lon };
+  if (routePickerTarget === 'from') {
+    routeFrom = loc;
+    document.getElementById('routeFromInput').value = name;
+    document.getElementById('routeFromInput').classList.add('filled');
+  } else {
+    routeTo = loc;
+    document.getElementById('routeToInput').value = name;
+    document.getElementById('routeToInput').classList.add('filled');
+  }
+  document.getElementById('routePicker').classList.remove('open');
+  checkRouteReady();
+}
+
+function routePickGPS() {
+  document.getElementById('routePicker').classList.remove('open');
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const loc = { name: 'My Location (GPS)', lat: pos.coords.latitude, lon: pos.coords.longitude };
+      userLatLng = L.latLng(loc.lat, loc.lon);
+      if (routePickerTarget === 'from') {
+        routeFrom = loc;
+        document.getElementById('routeFromInput').value = loc.name;
+        document.getElementById('routeFromInput').classList.add('filled');
+      } else {
+        routeTo = loc;
+        document.getElementById('routeToInput').value = loc.name;
+        document.getElementById('routeToInput').classList.add('filled');
+      }
+      placeUserMarker(userLatLng);
+      checkRouteReady();
+    },
+    () => alert('GPS access denied.')
+  );
+}
+
+function routePickFromMap() {
+  document.getElementById('routePicker').classList.remove('open');
+  document.getElementById('routePanel').classList.remove('open');
+  // Enter pin mode
+  map.getContainer().style.cursor = 'crosshair';
+  document.getElementById('mapPinBanner').classList.add('show');
+  document.getElementById('mapPinBanner').textContent =
+    routePickerTarget === 'from' ? 'Tap map to set START point' : 'Tap map to set DESTINATION';
+
+  map.once('click', function(e) {
+    const { lat, lng } = e.latlng;
+    const name = `Pin (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+
+    // Find nearest known place
+    let nearest = null, minDist = Infinity;
+    const allLocs = mapPlaces.length > 0 ? mapPlaces : LANDMARKS;
+    allLocs.forEach(l => {
+      const plat = l.lat || (l.coordinates && l.coordinates.lat);
+      const plon = l.lon || l.lng || (l.coordinates && (l.coordinates.lon || l.coordinates.lng));
+      if (!plat || !plon) return;
+      const d = Math.sqrt((plat - lat) ** 2 + (plon - lng) ** 2);
+      if (d < minDist) { minDist = d; nearest = l; }
+    });
+    const label = nearest && minDist < 0.01 ? `Near ${nearest.name || nearest.name_en}` : name;
+
+    const loc = { name: label, lat, lon: lng };
+    if (routePickerTarget === 'from') {
+      routeFrom = loc;
+      document.getElementById('routeFromInput').value = label;
+      document.getElementById('routeFromInput').classList.add('filled');
+    } else {
+      routeTo = loc;
+      document.getElementById('routeToInput').value = label;
+      document.getElementById('routeToInput').classList.add('filled');
+    }
+
+    map.getContainer().style.cursor = '';
+    document.getElementById('mapPinBanner').classList.remove('show');
+    document.getElementById('routePanel').classList.add('open');
+    checkRouteReady();
+  });
+}
+
+function routeUseGPS() {
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      routeFrom = { name: 'My Location (GPS)', lat: pos.coords.latitude, lon: pos.coords.longitude };
+      userLatLng = L.latLng(routeFrom.lat, routeFrom.lon);
+      document.getElementById('routeFromInput').value = routeFrom.name;
+      document.getElementById('routeFromInput').classList.add('filled');
+      placeUserMarker(userLatLng);
+      checkRouteReady();
+    },
+    () => alert('GPS access denied.')
+  );
+}
+
+function swapRoute() {
+  const tmp = routeFrom;
+  routeFrom = routeTo;
+  routeTo = tmp;
+  document.getElementById('routeFromInput').value = routeFrom ? routeFrom.name : '';
+  document.getElementById('routeToInput').value = routeTo ? routeTo.name : '';
+  document.getElementById('routeFromInput').classList.toggle('filled', !!routeFrom);
+  document.getElementById('routeToInput').classList.toggle('filled', !!routeTo);
+  checkRouteReady();
+}
+
+function checkRouteReady() {
+  document.getElementById('routeGoBtn').disabled = !(routeFrom && routeTo);
+}
+
+function executeRoute() {
+  if (!routeFrom || !routeTo) return;
+
+  // Remove old route
+  if (routeControl) { try { map.removeControl(routeControl); } catch(e){} routeControl = null; }
+
+  const from = L.latLng(routeFrom.lat, routeFrom.lon);
+  const to = L.latLng(routeTo.lat, routeTo.lon);
+
+  drawRoute(from, to);
+
+  // Show distance estimate
+  const dist = from.distanceTo(to);
+  const km = (dist / 1000).toFixed(1);
+  const mins = Math.round(dist / 1000 / 30 * 60); // ~30 km/h average
+  document.getElementById('routeInfo').innerHTML = `
+    <div style="display:flex;gap:20px">
+      <div><div class="ri-label">Distance</div><div class="ri-value">${km} km</div></div>
+      <div><div class="ri-label">Est. Time</div><div class="ri-value">~${mins} min</div></div>
+      <div><div class="ri-label">From</div><div style="font-size:12px;font-weight:500">${routeFrom.name}</div></div>
+      <div><div class="ri-label">To</div><div style="font-size:12px;font-weight:500">${routeTo.name}</div></div>
+    </div>`;
+  document.getElementById('routeInfo').classList.add('show');
+}
+
+// ═══ LOCATION PICKER ═══
+let userLocationName = null;
+let pickerSelectedLoc = null;
+let pinMode = false;
+
+const LANDMARKS = [
+  { name: 'Ramkund', cat: 'ghat', lat: 20.0063, lon: 73.7920 },
+  { name: 'Kalaram Temple', cat: 'temple', lat: 20.0082, lon: 73.7895 },
+  { name: 'Panchavati', cat: 'area', lat: 20.0075, lon: 73.7890 },
+  { name: 'CBS Bus Stand', cat: 'transport', lat: 19.9964, lon: 73.7816 },
+  { name: 'Nashik Road Station', cat: 'transport', lat: 19.9687, lon: 73.8099 },
+  { name: 'Tapovan', cat: 'temple', lat: 20.0123, lon: 73.7832 },
+  { name: 'Trimbakeshwar', cat: 'temple', lat: 19.9323, lon: 73.5311 },
+  { name: 'Dwarka Circle', cat: 'area', lat: 19.9892, lon: 73.7754 },
+  { name: 'College Road', cat: 'area', lat: 19.9945, lon: 73.7850 },
+  { name: 'Gangapur Road', cat: 'area', lat: 19.9600, lon: 73.7950 },
+  { name: 'Sula Vineyards', cat: 'winery', lat: 20.0268, lon: 73.6625 },
+  { name: 'Mumbai Naka', cat: 'area', lat: 19.9750, lon: 73.7700 },
+  { name: 'Deolali Camp', cat: 'area', lat: 19.9485, lon: 73.8299 },
+  { name: 'CIDCO', cat: 'area', lat: 19.9820, lon: 73.7510 },
+  { name: 'Nashik Ozar Airport', cat: 'transport', lat: 20.1189, lon: 73.9091 },
+  { name: 'Saptashrungi', cat: 'temple', lat: 20.3893, lon: 73.8992 },
+  { name: 'Pandav Leni', cat: 'tourist', lat: 19.9838, lon: 73.7649 },
+  { name: 'Satpur MIDC', cat: 'area', lat: 20.0200, lon: 73.7600 },
+  { name: 'Makhmalabad', cat: 'area', lat: 20.0100, lon: 73.7500 },
+  { name: 'Adgaon', cat: 'area', lat: 20.0050, lon: 73.7350 },
+];
+
+function openLocPicker() {
+  renderLocOptions('');
+  document.getElementById('locPickerOverlay').classList.add('open');
+  document.getElementById('locPickerSearch').value = '';
+  document.getElementById('locPickerSearch').focus();
+}
+
+function closeLocPicker() {
+  document.getElementById('locPickerOverlay').classList.remove('open');
+}
+
+function renderLocOptions(query) {
+  const q = query.toLowerCase();
+  // Combine LANDMARKS + mapPlaces that have coords
+  let allLocs = [...LANDMARKS];
+  if (mapPlaces.length > 0) {
+    mapPlaces.forEach(p => {
+      const lat = p.lat || (p.coordinates && p.coordinates.lat);
+      const lon = p.lon || p.lng || (p.coordinates && (p.coordinates.lon || p.coordinates.lng));
+      if (lat && lon && !allLocs.find(l => l.name === p.name)) {
+        allLocs.push({ name: p.name || p.name_en, cat: p.category || 'place', lat, lon });
+      }
+    });
+  }
+
+  const filtered = q ? allLocs.filter(l => l.name.toLowerCase().includes(q)) : allLocs.slice(0, 20);
+
+  document.getElementById('locPickerOptions').innerHTML = filtered.map(l => `
+    <div class="loc-option ${pickerSelectedLoc && pickerSelectedLoc.name === l.name ? 'active' : ''}"
+         onclick="selectLocOption('${l.name}',${l.lat},${l.lon},'${l.cat}')">
+      <div class="loc-option-icon" style="background:${getCatColor(l.cat)}15;color:${getCatColor(l.cat)}">
+        <i class="${getCatIcon(l.cat)}"></i>
+      </div>
+      <div class="loc-option-info">
+        <h4>${l.name}</h4>
+        <p>${l.cat} &middot; ${l.lat.toFixed(4)}, ${l.lon.toFixed(4)}</p>
+      </div>
+    </div>
+  `).join('') || '<p style="padding:16px;text-align:center;color:var(--ink-muted);font-size:13px">No results found</p>';
+}
+
+function filterLocOptions(q) { renderLocOptions(q); }
+
+function selectLocOption(name, lat, lon, cat) {
+  pickerSelectedLoc = { name, lat, lon, cat };
+  renderLocOptions(document.getElementById('locPickerSearch').value);
+}
+
+function gpsLocPicker() {
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      pickerSelectedLoc = { name: 'Current Location (GPS)', lat: pos.coords.latitude, lon: pos.coords.longitude, cat: 'gps' };
+      userLatLng = L.latLng(pos.coords.latitude, pos.coords.longitude);
+      confirmLocPicker();
+    },
+    () => alert('Location access denied.')
+  );
+}
+
+function openMapPicker() {
+  closeLocPicker();
+  navigate('map');
+  setTimeout(() => {
+    initMap();
+    togglePinMode();
+  }, 200);
+}
+
+function confirmLocPicker() {
+  if (!pickerSelectedLoc) { closeLocPicker(); return; }
+  userLocationName = pickerSelectedLoc.name;
+  userLatLng = L.latLng(pickerSelectedLoc.lat, pickerSelectedLoc.lon);
+  document.getElementById('chatLocName').textContent = userLocationName;
+  closeLocPicker();
+}
+
+// ═══ MAP PIN MODE (manual location) ═══
+function togglePinMode() {
+  pinMode = !pinMode;
+  document.getElementById('mapPinBtn').classList.toggle('active', pinMode);
+  document.getElementById('mapPinBanner').classList.toggle('show', pinMode);
+  if (pinMode) {
+    map.getContainer().style.cursor = 'crosshair';
+    map.once('click', onMapPin);
+  } else {
+    map.getContainer().style.cursor = '';
+    map.off('click', onMapPin);
+  }
+}
+
+function onMapPin(e) {
+  const { lat, lng } = e.latlng;
+  userLatLng = L.latLng(lat, lng);
+  userLocationName = `Custom (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+
+  if (userMarker) map.removeLayer(userMarker);
+  userMarker = L.circleMarker([lat, lng], {
+    radius: 10, fillColor: '#4285F4', fillOpacity: 1,
+    color: 'white', weight: 3,
+  }).addTo(map).bindTooltip('Your location').openTooltip();
+
+  document.getElementById('chatLocName').textContent = userLocationName;
+
+  // Find nearest landmark name
+  let nearest = null, minDist = Infinity;
+  LANDMARKS.forEach(l => {
+    const d = Math.sqrt((l.lat - lat) ** 2 + (l.lon - lng) ** 2);
+    if (d < minDist) { minDist = d; nearest = l; }
+  });
+  if (nearest && minDist < 0.02) {
+    userLocationName = `Near ${nearest.name}`;
+    document.getElementById('chatLocName').textContent = userLocationName;
+  }
+
+  pinMode = false;
+  document.getElementById('mapPinBtn').classList.remove('active');
+  document.getElementById('mapPinBanner').classList.remove('show');
+  map.getContainer().style.cursor = '';
+}
+
+// ═══ ASSISTANT-MAP INTEGRATION ═══
+// Detect direction queries: "how to reach X", "X kaise jaye", "X कैसे पहुँचें", "route to X"
+const DIRECTION_PATTERNS = [
+  // "from X to Y" — English
+  /(?:from)\s+(.+?)\s+(?:to)\s+(.+?)(?:\s+(?:how|kaise|route|direction).*)?$/i,
+  // "X se Y kaise jaye" — Hindi transliterated
+  /(.+?)\s+se\s+(.+?)\s+(?:kaise|tak|ka rasta).*$/i,
+  // "X से Y कैसे जाये/जाएं/पहुँचें" — Hindi Devanagari (greedy capture for both groups)
+  /(.+?)\s+से\s+(.+?)\s+(?:कैसे|तक|जाये|जाएं|जायें|पहुँचें|पहुंचे|का रास्ता).*$/i,
+  // "X पासून Y कसे जायचे" — Marathi
+  /(.+?)\s+(?:पासून|वरून)\s+(.+?)\s+(?:कसे|पर्यंत|चा रस्ता).*$/i,
+  // "how to reach Y from X"
+  /(?:how to (?:reach|go to|get to)|route to|directions? to|navigate to)\s+(.+?)(?:\s+from\s+(.+))?$/i,
+  // "Y कैसे जाएं" — single destination (no from)
+  /(.+?)\s+(?:कैसे (?:जाएं|जाये|जायें|पहुँचें)|कसे जायचे|kaise (?:jaye|pahunche)).*$/i,
+  // "Y तक कैसे" / "Y का रास्ता"
+  /(.+?)\s+(?:तक कैसे|का रास्ता|चा रस्ता|tak kaise).*$/i,
+];
+
+function findPlace(name) {
+  if (!name) return null;
+  const n = name.trim().toLowerCase().replace(/[।?!,.]/g, '').trim();
+  const allP = mapPlaces.length > 0 ? mapPlaces : LANDMARKS;
+  // Exact match
+  let found = allP.find(p => (p.name || p.name_en || '').toLowerCase() === n);
+  // Partial match (English name)
+  if (!found) found = allP.find(p => (p.name || p.name_en || '').toLowerCase().includes(n));
+  // Partial match (Hindi name)
+  if (!found) found = allP.find(p => (p.name_hi || '').toLowerCase().includes(n));
+  // Reverse: query contains place name
+  if (!found) found = allP.find(p => {
+    const pn = (p.name || '').toLowerCase();
+    return pn.length > 3 && n.includes(pn);
+  });
+  // Fuzzy: try common transliterations
+  if (!found) {
+    const fuzzyMap = { 'ramkund':'Ramkund', 'ram kund':'Ramkund', 'राम कुंड':'Ramkund', 'राम कुन्द':'Ramkund', 'रामकुंड':'Ramkund',
+      'kalaram':'Kalaram Temple', 'कालाराम':'Kalaram Temple', 'कालाराम मंदिर':'Kalaram Temple', 'kala ram':'Kalaram Temple',
+      'trimbakeshwar':'Trimbakeshwar', 'त्र्यंबकेश्वर':'Trimbakeshwar', 'trimbak':'Trimbakeshwar',
+      'sula':'Sula Vineyards', 'सुला':'Sula Vineyards', 'pandav leni':'Pandav Leni Caves', 'पांडवलेणी':'Pandav Leni Caves',
+      'tapovan':'Tapovan', 'तपोवन':'Tapovan', 'saptashrungi':'Saptashrungi Devi', 'सप्तश्रृंगी':'Saptashrungi Devi',
+      'cbs':'CBS Bus Stand', 'सीबीएस':'CBS Bus Stand', 'nashik road':'Nashik Road Railway', 'नाशिक रोड':'Nashik Road Railway',
+      'panchavati':'Panchavati', 'पंचवटी':'Panchavati', 'muktidham':'Muktidham', 'मुक्तिधाम':'Muktidham',
+    };
+    for (const [key, val] of Object.entries(fuzzyMap)) {
+      if (n.includes(key)) { found = allP.find(p => (p.name || '').includes(val)); break; }
+    }
+  }
+  return found;
+}
+
+function getPlaceLatLon(p) {
+  const lat = p.lat || (p.coordinates && p.coordinates.lat);
+  const lon = p.lon || p.lng || (p.coordinates && (p.coordinates.lon || p.coordinates.lng));
+  return (lat && lon) ? { lat, lon } : null;
+}
+
+const _origAddMsg = addMsg;
+addMsg = function(type, text, audioB64, lang) {
+  _origAddMsg(type, text, audioB64, lang);
+  if (type !== 'bot') return;
+
+  const textLower = (text || '').toLowerCase();
+  const allP = mapPlaces.length > 0 ? mapPlaces : LANDMARKS;
+
+  // Get last user question too — scan BOTH for place names
+  const userMsgsAll = document.querySelectorAll('.msg-user .msg-bubble');
+  const lastUserQ = userMsgsAll.length > 0 ? userMsgsAll[userMsgsAll.length - 1].textContent.toLowerCase() : '';
+  const combinedText = textLower + ' ' + lastUserQ;
+
+  // Find ALL mentioned places in bot response OR user question
+  const mentioned = [];
+  const seenNames = new Set();
+  allP.forEach(p => {
+    const pname = (p.name || p.name_en || '').toLowerCase();
+    const pnameHi = (p.name_hi || '').toLowerCase();
+    if (seenNames.has(pname)) return;
+    const matched = (pname.length > 3 && combinedText.includes(pname)) ||
+                    (pnameHi.length > 3 && combinedText.includes(pnameHi));
+    if (matched) {
+      const coords = getPlaceLatLon(p);
+      if (coords) { mentioned.push({ ...p, ...coords }); seenNames.add(pname); }
+    }
+  });
+
+  if (mentioned.length === 0) return;
+
+  const msgs = document.querySelectorAll('.msg-bot');
+  const lastMsg = msgs[msgs.length - 1];
+  if (!lastMsg) return;
+  const bubble = lastMsg.querySelector('.msg-bubble');
+
+  // Add container for map buttons
+  const btnWrap = document.createElement('div');
+  btnWrap.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px';
+
+  // "Show on Map" for first mentioned place
+  const first = mentioned[0];
+  const showBtn = document.createElement('button');
+  showBtn.className = 'msg-map-btn';
+  showBtn.innerHTML = `<i class="ri-map-pin-line"></i> ${first.name || first.name_en}`;
+  showBtn.onclick = () => {
+    navigate('map');
+    setTimeout(() => { initMap(); map.setView([first.lat, first.lon], 16); showMapCard(first, first.lat, first.lon); }, 200);
+  };
+  btnWrap.appendChild(showBtn);
+
+  // If 2+ places mentioned, add "Show all on Map"
+  if (mentioned.length > 1) {
+    const allBtn = document.createElement('button');
+    allBtn.className = 'msg-map-btn';
+    allBtn.innerHTML = `<i class="ri-road-map-line"></i> Show all (${mentioned.length})`;
+    allBtn.onclick = () => {
+      navigate('map');
+      setTimeout(() => {
+        initMap();
+        const bounds = L.latLngBounds(mentioned.map(p => [p.lat, p.lon]));
+        map.fitBounds(bounds, { padding: [50, 50] });
+      }, 200);
+    };
+    btnWrap.appendChild(allBtn);
+  }
+
+  // Detect if this was a direction/route query — add "Get Directions" button
+  const lastUserText = lastUserQ; // already captured above
+
+  let isDirectionQuery = false;
+  let fromPlace = null, toPlace = null;
+
+  for (const pat of DIRECTION_PATTERNS) {
+    const m = lastUserText.match(pat);
+    if (m) {
+      isDirectionQuery = true;
+      // Patterns with 2 capture groups = from/to
+      // Patterns with 1 capture group = destination only
+      // Special: "how to reach Y from X" has dest in m[1], source in m[2]
+      if (pat.source.includes('from\\s+(.+))?$')) {
+        // "how to reach Y from X"
+        toPlace = findPlace(m[1]);
+        if (m[2]) fromPlace = findPlace(m[2]);
+      } else if (m[2]) {
+        fromPlace = findPlace(m[1]);
+        toPlace = findPlace(m[2]);
+      } else if (m[1]) {
+        toPlace = findPlace(m[1]);
+      }
+      break;
+    }
+  }
+
+  // Fallback: detect direction keywords in question
+  if (!isDirectionQuery) {
+    const dirWords = ['reach', 'route', 'direction', 'navigate', 'rasta', 'रास्ता', 'रस्ता', 'कैसे जा', 'कसे जा', 'pahunch', 'पहुँच', 'kaise ja', 'जाये', 'जाएं', 'जायचे'];
+    if (dirWords.some(w => lastUserText.includes(w))) {
+      isDirectionQuery = true;
+      // Use mentioned places: first = from (if 2+), last = to
+      if (mentioned.length >= 2) {
+        fromPlace = mentioned[0];
+        toPlace = mentioned[1];
+      } else if (mentioned.length === 1) {
+        toPlace = mentioned[0];
+      }
+    }
+  }
+
+  // If regex didn't find places but we have mentioned places from text scan
+  if (isDirectionQuery && !toPlace && mentioned.length > 0) {
+    if (mentioned.length >= 2) { fromPlace = fromPlace || mentioned[0]; toPlace = mentioned[1]; }
+    else { toPlace = mentioned[0]; }
+  }
+
+  if (isDirectionQuery && (toPlace || mentioned[0])) {
+    const dest = toPlace || mentioned[0];
+    const destCoords = getPlaceLatLon(dest);
+    if (destCoords) {
+      const dirBtn = document.createElement('button');
+      dirBtn.className = 'msg-map-btn';
+      dirBtn.style.cssText = 'background:rgba(232,101,43,0.12);color:#C44B1A';
+      const fromLabel = fromPlace ? fromPlace.name || fromPlace.name_en : (userLocationName || 'My location');
+
+      dirBtn.innerHTML = `<i class="ri-route-line"></i> Directions: ${fromLabel} → ${dest.name || dest.name_en}`;
+      dirBtn.onclick = () => {
+        navigate('map');
+        setTimeout(() => {
+          initMap();
+          // Set route
+          if (fromPlace) {
+            const fc = getPlaceLatLon(fromPlace);
+            if (fc) routeFrom = { name: fromPlace.name || fromPlace.name_en, lat: fc.lat, lon: fc.lon };
+          } else if (userLatLng) {
+            routeFrom = { name: userLocationName || 'My Location', lat: userLatLng.lat, lon: userLatLng.lng };
+          }
+          routeTo = { name: dest.name || dest.name_en, lat: destCoords.lat, lon: destCoords.lon };
+          document.getElementById('routeFromInput').value = routeFrom ? routeFrom.name : '';
+          document.getElementById('routeFromInput').classList.toggle('filled', !!routeFrom);
+          document.getElementById('routeToInput').value = routeTo.name;
+          document.getElementById('routeToInput').classList.add('filled');
+          openRoutePanel();
+          if (routeFrom) executeRoute();
+        }, 200);
+      };
+      btnWrap.appendChild(dirBtn);
+    }
+  }
+
+  // ═══ EMERGENCY DETECTION ═══
+  const emergencyKeywords = {
+    medical: ['medical', 'doctor', 'hospital', 'ambulance', 'injury', 'hurt', 'sick', 'pain', 'bleeding', 'fever', 'heart attack', 'unconscious',
+      'डॉक्टर', 'अस्पताल', 'एम्बुलेंस', 'दवाई', 'चोट', 'बीमार', 'दर्द', 'बुखार', 'खून', 'बेहोश', 'तबीयत',
+      'डॉक्टर', 'हॉस्पिटल', 'रुग्णवाहिका', 'दुखापत', 'आजारी'],
+    missing_person: ['missing', 'lost person', 'child lost', 'can\'t find', 'separated',
+      'खोया', 'गुम', 'बच्चा खो', 'बिछड़', 'लापता', 'हरवले', 'सापडत नाही', 'मूल हरवले'],
+    stampede: ['stampede', 'crowd', 'rush', 'crush', 'भगदड़', 'भीड़', 'चेंगराचेंगरी', 'गर्दी'],
+    fire: ['fire', 'burning', 'smoke', 'आग', 'जल', 'धुआं', 'आग लागली', 'धूर'],
+    drowning: ['drowning', 'river', 'water', 'swimming', 'डूब', 'नदी', 'पानी', 'बुडत', 'पाणी'],
+  };
+
+  let detectedEmergency = null;
+  for (const [type, keywords] of Object.entries(emergencyKeywords)) {
+    if (keywords.some(kw => lastUserQ.includes(kw) || textLower.includes(kw))) {
+      detectedEmergency = type;
+      break;
+    }
+  }
+
+  if (detectedEmergency) {
+    const scenario = SOS_SCENARIOS.find(s => s.key === detectedEmergency) || SOS_SCENARIOS[0];
+    // SOS quick action button
+    const sosBtn = document.createElement('button');
+    sosBtn.className = 'msg-map-btn';
+    sosBtn.style.cssText = 'background:rgba(220,38,38,0.1);color:#DC2626';
+    sosBtn.innerHTML = `<i class="${scenario.icon}"></i> Emergency: ${scenario.title}`;
+    sosBtn.onclick = () => {
+      navigate('emergency');
+      setTimeout(() => triggerSOS(detectedEmergency), 300);
+    };
+    btnWrap.appendChild(sosBtn);
+
+    // Direct call button
+    const callBtn = document.createElement('button');
+    callBtn.className = 'msg-map-btn';
+    callBtn.style.cssText = 'background:rgba(220,38,38,0.15);color:#DC2626;font-weight:700';
+    callBtn.innerHTML = '<i class="ri-phone-fill"></i> Call 112';
+    callBtn.onclick = () => window.location.href = 'tel:112';
+    btnWrap.appendChild(callBtn);
+
+    // Nearest hospital button if medical
+    if (detectedEmergency === 'medical') {
+      const hospBtn = document.createElement('button');
+      hospBtn.className = 'msg-map-btn';
+      hospBtn.style.cssText = 'background:rgba(5,150,105,0.1);color:#059669';
+      hospBtn.innerHTML = '<i class="ri-hospital-line"></i> Nearest Hospital';
+      hospBtn.onclick = () => {
+        navigate('map');
+        setTimeout(() => {
+          initMap();
+          setMapFilter('emergency', document.querySelector('[data-cat="emergency"]'));
+          // Find hospitals and zoom
+          const hospitals = mapPlaces.filter(p => normCat(p.category) === 'emergency');
+          if (hospitals.length > 0 && userLatLng) {
+            // Find nearest
+            let nearest = hospitals[0], minDist = Infinity;
+            hospitals.forEach(h => {
+              const d = Math.sqrt((h.lat - userLatLng.lat)**2 + (h.lon - userLatLng.lng)**2);
+              if (d < minDist) { minDist = d; nearest = h; }
+            });
+            map.setView([nearest.lat, nearest.lon], 15);
+            showMapCard(nearest, nearest.lat, nearest.lon);
+          } else {
+            const bounds = L.latLngBounds(hospitals.filter(h=>h.lat).map(h=>[h.lat, h.lon]));
+            if (bounds.isValid()) map.fitBounds(bounds, {padding:[50,50]});
+          }
+        }, 200);
+      };
+      btnWrap.appendChild(hospBtn);
+    }
+  }
+
+  bubble.appendChild(btnWrap);
+};
+
+// Hook into navigation to init map + persist page on refresh
+const _navForMap = navigate;
+navigate = function(page) {
+  _navForMap(page);
+  // Save active page for refresh persistence
+  sessionStorage.setItem('yatri_page', page);
+  if (page === 'map') {
+    setTimeout(() => {
+      initMap();
+      if (map) map.invalidateSize();
+    }, 100);
+  }
+};
+
+// Restore page on refresh
+(function() {
+  const savedPage = sessionStorage.getItem('yatri_page');
+  if (savedPage && savedPage !== 'home') {
+    navigate(savedPage);
+  }
+})();
+
+// Register PWA service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/static/sw.js').catch(() => {});
 }
 </script>
 </body>

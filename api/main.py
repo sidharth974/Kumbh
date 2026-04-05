@@ -171,7 +171,7 @@ STATIC_DIR = Path(__file__).parent.parent / "static"
 async def root():
     index = STATIC_DIR / "index.html"
     if index.exists():
-        return FileResponse(index)
+        return FileResponse(index, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
     return {
         "name": "Nashik Kumbh Mela 2027 AI Assistant",
         "version": "1.0.0",

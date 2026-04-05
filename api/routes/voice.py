@@ -52,7 +52,7 @@ async def voice_input(
         )
 
     # 3. RAG retrieval
-    docs = rag.retrieve(transcript, language=detected_lang, top_k=5)
+    docs = rag.retrieve(transcript, language=detected_lang, top_k=3)
     context_texts = [d["text"] for d in docs]
 
     # 4. LLM generation
@@ -150,7 +150,7 @@ async def voice_websocket(
                 continue
 
             # RAG
-            docs = rag.retrieve(transcript, language=lang, top_k=5)
+            docs = rag.retrieve(transcript, language=lang, top_k=3)
             context_texts = [d["text"] for d in docs]
 
             # Stream LLM tokens

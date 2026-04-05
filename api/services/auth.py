@@ -67,3 +67,18 @@ async def get_current_user(request: Request) -> Dict:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
     return {"user_id": payload["sub"], "email": payload["email"]}
+
+
+async def get_optional_user(request: Request) -> Optional[Dict]:
+    """
+    FastAPI dependency — returns user dict if authenticated, None if guest.
+    Does NOT raise 401.
+    """
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return None
+    token = auth_header[7:]
+    payload = decode_token(token)
+    if payload is None:
+        return None
+    return {"user_id": payload["sub"], "email": payload["email"]}

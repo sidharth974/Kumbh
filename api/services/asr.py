@@ -10,7 +10,7 @@ from typing import Optional
 
 log = logging.getLogger(__name__)
 
-WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "base")
+WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "small")
 LANG_HINTS = {
     "hi": "hindi", "mr": "marathi", "gu": "gujarati",
     "ta": "tamil",  "te": "telugu",  "kn": "kannada",

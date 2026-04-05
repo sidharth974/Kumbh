@@ -12,17 +12,42 @@ from api.models.schemas import Coordinates, ItineraryRequest, ItineraryResponse,
 router = APIRouter(prefix="/places", tags=["places"])
 
 ROOT = Path(__file__).parent.parent.parent
-PLACES_PATH = ROOT / "data" / "nashik_places.json"
+
+PLACES_FILES = [
+    ROOT / "data" / "nashik_places.json",
+    ROOT / "data" / "nashik_complete_places.json",
+    ROOT / "static" / "places_geo.json",
+]
 
 _places_cache: Optional[list[dict]] = None
 
 
 def _load_places() -> list[dict]:
     global _places_cache
-    if _places_cache is None:
-        with open(PLACES_PATH) as f:
-            data = json.load(f)
-        _places_cache = data.get("places", [])
+    if _places_cache is not None:
+        return _places_cache
+
+    all_places = []
+    seen_names = set()
+
+    for path in PLACES_FILES:
+        if not path.exists():
+            continue
+        try:
+            with open(path) as f:
+                data = json.load(f)
+            items = data.get("places", data) if isinstance(data, dict) else data
+            if not isinstance(items, list):
+                continue
+            for item in items:
+                name = item.get("name", item.get("name_en", ""))
+                if name and name not in seen_names:
+                    seen_names.add(name)
+                    all_places.append(item)
+        except Exception:
+            continue
+
+    _places_cache = all_places
     return _places_cache
 
 

@@ -28,8 +28,12 @@ SYSTEM_PROMPTS = {
 
 def _build_prompt(query: str, context: list[str], language: str) -> list[dict]:
     system = SYSTEM_PROMPTS.get(language, SYSTEM_PROMPTS["en"])
-    context_block = "\n\n".join(f"[{i+1}] {c}" for i, c in enumerate(context)) if context else ""
-    user_content = f"Context:\n{context_block}\n\nQuestion: {query}" if context_block else query
+    # Keep context compact — just the text, no numbering
+    context_block = "\n---\n".join(context) if context else ""
+    if context_block:
+        user_content = f"{context_block}\n\nAnswer this in 2-3 sentences using the info above: {query}"
+    else:
+        user_content = query
     return [
         {"role": "system", "content": system},
         {"role": "user", "content": user_content},
@@ -70,10 +74,12 @@ class LLMService:
         context: list[str],
         language: str = "en",
         domain: str = "general",
-        max_tokens: int = 512,
+        max_tokens: int = 150,
         temperature: float = 0.3,
     ) -> str:
-        messages = _build_prompt(query, context, language)
+        # Limit context for CPU speed: top 3 chunks, max 1500 chars each
+        trimmed = [c[:1500] for c in context[:3]]
+        messages = _build_prompt(query, trimmed, language)
 
         if self._backend == "gguf" and self._llama:
             response = self._llama.create_chat_completion(
@@ -106,7 +112,7 @@ class LLMService:
                         "top_p": 0.9,
                     },
                 },
-                timeout=60.0,
+                timeout=180.0,
             )
             resp.raise_for_status()
             return resp.json()["message"]["content"].strip()

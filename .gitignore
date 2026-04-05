@@ -1,3 +1,16 @@
-/venv
-.claude
-.codex
+venv/
+.claude/
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.egg-info/
+dist/
+build/
+# *.gguf  — pushing fine-tuned model to repo
+# vectordb/chroma_db/  — pushing pre-built vector DB to repo
+data/yatri.db
+node_modules/
+.expo/
+*.log
+.DS_Store

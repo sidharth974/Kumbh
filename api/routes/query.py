@@ -35,6 +35,39 @@ def detect_language(text: str, hint: Optional[str] = None) -> str:
         return "en"
 
 
+EMERGENCY_KEYWORDS = {
+    "medical": ["doctor", "hospital", "ambulance", "injury", "hurt", "sick", "bleeding", "fever", "heart attack",
+                "डॉक्टर", "अस्पताल", "एम्बुलेंस", "चोट", "बीमार", "दर्द", "बुखार", "खून", "बेहोश", "तबीयत",
+                "दुखापत", "आजारी", "रुग्णवाहिका", "हॉस्पिटल"],
+    "missing": ["missing", "lost", "child lost", "खोया", "गुम", "बच्चा खो", "लापता", "हरवले"],
+    "fire": ["fire", "burning", "आग", "जल रहा", "आग लागली"],
+    "drowning": ["drowning", "river", "डूब", "नदी", "बुडत"],
+}
+
+EMERGENCY_RESPONSES = {
+    "medical": {
+        "en": "EMERGENCY MEDICAL HELP:\n- Ambulance: 108\n- Kumbh Helpline: 1800-120-2027\n- Nearest hospitals: Civil Hospital (Trimbak Road), Bytco Hospital (College Road), Wockhardt Hospital (Mumbai Naka)\n- First aid centers at all major ghats during Kumbh\n- Carry basic medicines, stay hydrated",
+        "hi": "आपातकालीन चिकित्सा सहायता:\n- एम्बुलेंस: 108\n- कुंभ हेल्पलाइन: 1800-120-2027\n- नजदीकी अस्पताल: सिविल हॉस्पिटल (त्रिंबक रोड), बायटको हॉस्पिटल (कॉलेज रोड), वॉकहार्ट हॉस्पिटल (मुंबई नाका)\n- कुंभ के दौरान सभी प्रमुख घाटों पर प्राथमिक चिकित्सा केंद्र\n- बुनियादी दवाइयाँ रखें, पानी पीते रहें",
+        "mr": "आणीबाणी वैद्यकीय मदत:\n- रुग्णवाहिका: 108\n- कुंभ हेल्पलाइन: 1800-120-2027\n- जवळचे हॉस्पिटल: सिव्हिल हॉस्पिटल (त्रिंबक रोड), बायटको हॉस्पिटल\n- कुंभात सर्व प्रमुख घाटांवर प्रथमोपचार केंद्रे",
+    },
+    "missing": {
+        "en": "MISSING PERSON:\n- Kumbh Missing Persons Helpline: 1800-222-2027\n- Police: 100\n- Register at nearest Lost & Found center\n- Announce at ghat PA systems\n- Share photo with police control room",
+        "hi": "लापता व्यक्ति:\n- कुंभ लापता व्यक्ति हेल्पलाइन: 1800-222-2027\n- पुलिस: 100\n- नजदीकी खोया-पाया केंद्र में रजिस्टर करें\n- घाट के PA सिस्टम पर घोषणा करवाएं",
+        "mr": "बेपत्ता व्यक्ती:\n- कुंभ बेपत्ता हेल्पलाइन: 1800-222-2027\n- पोलीस: 100\n- जवळच्या हरवले-सापडले केंद्रात नोंदणी करा",
+    },
+    "fire": {
+        "en": "FIRE EMERGENCY:\n- Fire Brigade: 101\n- Police: 100\n- Emergency: 112\n- Evacuate immediately, stay low, cover mouth",
+        "hi": "अग्नि आपातकाल:\n- अग्निशमन: 101\n- पुलिस: 100\n- आपातकालीन: 112\n- तुरंत बाहर निकलें, नीचे रहें, मुंह ढकें",
+        "mr": "अग्निशमन आणीबाणी:\n- अग्निशमन: 101\n- पोलीस: 100\n- आणीबाणी: 112",
+    },
+    "drowning": {
+        "en": "DROWNING/RIVER EMERGENCY:\n- Emergency: 112\n- Ambulance: 108\n- Do NOT jump in. Throw rope or float. Call for lifeguards at ghat.",
+        "hi": "डूबने की आपातकालीन:\n- आपातकालीन: 112\n- एम्बुलेंस: 108\n- अंदर न कूदें। रस्सी या तैरने वाली चीज फेंकें। घाट पर लाइफगार्ड को बुलाएं।",
+        "mr": "बुडण्याची आणीबाणी:\n- आणीबाणी: 112\n- रुग्णवाहिका: 108\n- आत उडी मारू नका. दोरी किंवा तरंगणारी वस्तू फेका.",
+    },
+}
+
+
 @router.post("", response_model=QueryResponse)
 async def text_query(
     req: QueryRequest,
@@ -43,6 +76,19 @@ async def text_query(
 ):
     session_id = req.session_id or str(uuid.uuid4())
     language = detect_language(req.query, req.language)
+    query_lower = req.query.lower()
+
+    # Emergency bypass — instant response without LLM
+    for etype, keywords in EMERGENCY_KEYWORDS.items():
+        if any(kw in query_lower for kw in keywords):
+            responses = EMERGENCY_RESPONSES.get(etype, {})
+            response_text = responses.get(language, responses.get("en", "Call 112 for emergency"))
+            return QueryResponse(
+                response=response_text,
+                language=language,
+                sources=[],
+                session_id=session_id,
+            )
 
     # Retrieve context
     docs = rag.retrieve(req.query, language=language, domain=req.domain, top_k=5)

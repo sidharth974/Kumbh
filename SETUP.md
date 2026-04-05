@@ -1,236 +1,110 @@
-# Nashik Kumbh Mela 2027 — AI Multilingual Assistant
-## Complete Setup Guide
+# Yatri AI — Nashik Kumbh Mela 2027
+### Multilingual Voice AI Assistant
 
 ---
 
-## Architecture Overview
+## What is this?
+
+A fully offline, multilingual AI assistant for Nashik Kumbh Mela 2027 pilgrims and tourists. Speak in Hindi, Marathi, English (or 5 more Indian languages) and get instant answers about schedules, ghats, transport, food, wineries, and emergencies — with voice output.
+
+**Live demo:** Run the server and open `http://localhost:8000`
+
+---
+
+## Architecture
 
 ```
-React Native App (Mobile + Web)
-         ↓  REST API / WebSocket
-FastAPI Backend (your server)
-    ├── Whisper Large v3       ← Voice → Text (all 8 languages)
-    ├── ChromaDB + E5 Large    ← RAG retrieval
-    ├── Qwen2.5-7B GGUF        ← Answer generation (fine-tuned)
-    └── AI4Bharat TTS          ← Text → Voice (all 8 languages)
+Browser / Mobile PWA (static/index.html)
+         |
+         v  REST API + WebSocket
+FastAPI Backend (api/)
+    ├── Whisper small         ← Voice → Text (auto-detects language)
+    ├── ChromaDB + E5-Large   ← RAG retrieval (4500+ docs)
+    ├── Qwen2.5-3B (fine-tuned GGUF) ← Answer generation
+    ├── gTTS                  ← Text → Voice
+    └── SQLite                ← Users, sessions, conversations
 ```
 
-**Languages:** Hindi · Marathi · Gujarati · Tamil · Telugu · Kannada · Malayalam · English
+**Supported Languages:** Hindi, Marathi, Gujarati, Tamil, Telugu, Kannada, Malayalam, English
 
 ---
 
-## Hardware Requirements
+## Quick Start (5 minutes)
 
-| Setup | GPU | RAM | Disk |
-|-------|-----|-----|------|
-| Production | RTX 4090 (24GB) | 32GB | 200GB |
-| Minimum | RTX 3090 (24GB) | 16GB | 100GB |
-| Budget | 2× RTX 3080 (20GB) | 32GB | 100GB |
-| Cloud Training | A100 40GB (RunPod ~$1.5/hr) | - | - |
+### Prerequisites
+- Python 3.11+ 
+- 8GB+ RAM (16GB recommended)
+- [Ollama](https://ollama.com) installed
+- ffmpeg installed (`sudo apt install ffmpeg`)
 
----
-
-## Step 1: Install Dependencies
+### 1. Clone & Install
 
 ```bash
-# Clone and setup
-cd /home/sidharth/Kumbh
+git clone https://github.com/YOUR_USERNAME/Kumbh.git
+cd Kumbh
 
-# GPU PyTorch (CUDA 12.1)
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
 
-# All other deps
+# Install dependencies
 pip install -r requirements.txt
+```
 
-# Playwright (for JS-heavy sites)
-playwright install chromium
+### 2. Start the Server
 
-# Unsloth for fast training
-pip install "unsloth[colab-new] @ git+https://github.com/unslothai/unsloth.git"
+> **Everything is pre-built — no extra steps needed:**
+> - Fine-tuned model: `models/kumbh_model_q4_k_m.gguf` (1.8GB) — auto-detected, no Ollama needed
+> - Vector database: `vectordb/chroma_db/` (41MB, 4500+ embedded docs) — ready to use
+
+```bash
+python3 -m uvicorn api.main:app --host 0.0.0.0 --port 8000
+```
+
+### 3. Open the App
+
+Open `http://localhost:8000` in your browser. That's it.
+
+On mobile: open the same URL and tap "Add to Home Screen" for PWA install.
+
+---
+
+## If You Have the Fine-Tuned Model
+
+If `models/kumbh_model_q4_k_m.gguf` exists (1.8GB), the server **automatically uses it** instead of Ollama — faster and more accurate. No extra setup needed.
+
+**To get the GGUF model:**
+- Download from releases / shared drive, OR
+- Train it yourself (see [Training](#training-optional) below)
+
+Place it at:
+```
+models/kumbh_model_q4_k_m.gguf
+```
+
+The server auto-detects on startup:
+```
+GGUF model loaded: kumbh_model_q4_k_m.gguf    ← uses llama-cpp
+# OR if no GGUF:
+Using Ollama backend: qwen2.5:1.5b             ← uses Ollama
 ```
 
 ---
 
-## Step 2: Crawl & Build Knowledge Base
+## What's Included (No Setup Needed)
 
-```bash
-# Run all crawlers (takes 2-4 hours, downloads Wikipedia + OSM + news)
-python crawler/run_all_crawlers.py
+These are already in the repo — you do NOT need to regenerate them:
 
-# Or run individual crawlers:
-python crawler/spiders/wikipedia_spider.py    # 30-60 min
-python crawler/spiders/osm_places.py          # 5 min
-python crawler/spiders/news_crawler.py        # 30-60 min
-python crawler/spiders/indic_datasets.py      # 1-2 hours (large downloads)
-```
+| Data | Count | Location |
+|------|-------|----------|
+| Nashik places (temples, ghats, food, hotels, transport) | 178 places with coordinates | `static/places_geo.json` |
+| Knowledge base articles | 9 JSON files | `data/*.json` |
+| Cleaned + chunked + deduplicated KB | 4,636 chunks | `knowledge_base/` |
+| QA training pairs | 3,366 pairs | `data/synthetic_qa/` |
+| Emergency responses | 6 scenarios, 7 helplines | Hardcoded in `api/routes/` |
+| Map geodata | 178 markers with lat/lon | `static/places_geo.json` |
 
-**Output:** `knowledge_base/raw/` (expect 2-5GB of raw text)
-
----
-
-## Step 3: Run the Data Pipeline
-
-```bash
-# Full pipeline: clean → chunk → deduplicate → translate → generate QA
-python pipeline/run_pipeline.py
-
-# Or step by step:
-python pipeline/clean.py           # Remove noise, normalize Unicode
-python pipeline/chunk.py           # Split into 300-500 word chunks
-python pipeline/deduplicate.py     # Remove near-duplicates (MinHash)
-python translate/batch_translate.py # EN → HI/MR/GU/TA/TE/KN/ML via IndicTrans2
-python generate/qa_generator.py    # Generate 15,000-25,000 QA pairs (needs Ollama)
-python generate/paraphrase.py      # Augment with paraphrases
-```
-
-**For QA generation, start Ollama first:**
-```bash
-ollama serve &
-ollama pull qwen2.5:7b
-```
-
-**Output:** `data/synthetic_qa/all_languages_combined.jsonl` (~25,000 QA pairs)
-
----
-
-## Step 4: Build Vector Database
-
-```bash
-# Ingest all data into ChromaDB
-python vectordb/ingest_chroma.py
-
-# Test retrieval
-python vectordb/ingest_chroma.py --test
-
-# Expected output:
-# ChromaDB Collection: kumbh_mela_2027
-# Total documents: ~50,000-80,000
-```
-
----
-
-## Step 5: Fine-tune the Model
-
-### Option A: Train on Cloud (Recommended)
-```bash
-# Use RunPod / Vast.ai / Google Colab Pro
-# Upload data/synthetic_qa/all_languages_combined.jsonl
-# Run on A100 40GB:
-
-python training/train_qlora.py \
-    --model qwen2.5-7b \
-    --data data/synthetic_qa/all_languages_combined.jsonl \
-    --max-steps 2000 \
-    --use-unsloth
-
-# Training time: ~4-6 hours on A100
-# Cost on RunPod A100: ~$6-9 total
-```
-
-### Option B: Train on RTX 4090 (local)
-```bash
-python training/train_qlora.py \
-    --model qwen2.5-7b \
-    --data data/synthetic_qa/all_languages_combined.jsonl \
-    --max-steps 2000
-
-# Training time: ~8-12 hours
-```
-
-### Option C: Skip fine-tuning (use base model with RAG only)
-```bash
-# Use Qwen2.5-7B-Instruct directly with Ollama — no fine-tuning needed
-# Quality is lower but works immediately
-ollama pull qwen2.5:7b
-```
-
----
-
-## Step 6: Export to GGUF (for production)
-
-```bash
-# After training completes:
-python training/train_qlora.py --export-gguf
-# Follow the printed commands to convert + quantize
-
-# Result: models/kumbh_model_q4_k_m.gguf (~4GB)
-# This runs on CPU+GPU at ~20-40 tokens/sec
-```
-
----
-
-## Step 7: Start the API Server
-
-```bash
-# Set config
-cp .env.example .env
-# Edit .env: MODEL_PATH, CHROMA_DB_PATH, etc.
-
-# Start server
-uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 1
-
-# Or with Docker:
-docker-compose up -d
-```
-
-**API will be available at:** `http://your-server-ip:8000`
-
-**Test it:**
-```bash
-curl -X POST http://localhost:8000/api/v1/query \
-  -H "Content-Type: application/json" \
-  -d '{"query": "रामकुंड कहां है?", "language": "hi"}'
-```
-
----
-
-## Step 8: Connect React Native App
-
-```typescript
-// In your React Native app, copy these files:
-// frontend-integration/api.ts          → src/services/kumbhApi.ts
-// frontend-integration/useVoiceAssistant.ts → src/hooks/useVoiceAssistant.ts
-// frontend-integration/VoiceAssistantScreen.tsx → src/screens/VoiceAssistantScreen.tsx
-
-// Set your server URL in .env:
-EXPO_PUBLIC_API_URL=http://your-server-ip:8000
-
-// Install dependencies:
-npx expo install expo-av
-```
-
----
-
-## API Endpoints Reference
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/query` | Text query → text response |
-| POST | `/api/v1/voice/input` | Voice → Voice (full pipeline) |
-| POST | `/api/v1/voice/stt` | Voice → Text only |
-| POST | `/api/v1/voice/tts` | Text → Voice only |
-| POST | `/api/v1/emergency` | Emergency response (hardcoded, fast) |
-| GET | `/api/v1/emergency/contacts` | All emergency numbers |
-| GET | `/api/v1/places` | Nashik tourist places list |
-| GET | `/api/v1/places/{id}` | Place details in any language |
-| GET | `/api/v1/places/nearby` | Places near GPS coordinates |
-| POST | `/api/v1/places/recommend` | Personalized itinerary |
-| WS | `/ws/chat` | WebSocket streaming chat |
-| GET | `/api/v1/health` | Server health + GPU status |
-
----
-
-## Data Sources Crawled
-
-| Source | Content | Language |
-|--------|---------|----------|
-| Wikipedia (all language editions) | History, rituals, ghats, temples | EN/HI/MR/GU/TA/TE/KN/ML |
-| OpenStreetMap (Overpass) | All places, hospitals, transport | Multilingual tags |
-| Lokmat.com | Kumbh Mela news | Marathi |
-| Dainik Bhaskar | Kumbh Mela news | Hindi |
-| AI4Bharat IndicQA | Existing QA dataset | 12 Indian languages |
-| Samanantar corpus | Parallel translations | EN↔All Indian langs |
-| Seed JSON (hand-crafted) | Schedules, places, emergency | All 8 languages |
+**What you DO need to build:** ChromaDB (step 3 above) — it embeds the chunks into vectors.
 
 ---
 
@@ -238,55 +112,297 @@ npx expo install expo-av
 
 ```
 Kumbh/
-├── crawler/           ← Web scrapers (Wikipedia, OSM, news)
-├── pipeline/          ← Data cleaning, chunking, deduplication
-├── translate/         ← IndicTrans2 batch translation
-├── generate/          ← Synthetic QA generation
-├── vectordb/          ← ChromaDB ingestion + FAISS
-│   └── chroma_db/     ← Persistent vector store (after ingest)
-├── training/          ← QLoRA fine-tuning scripts
-├── api/               ← FastAPI backend
-│   ├── routes/        ← query, voice, emergency, places
-│   └── services/      ← ASR, TTS, LLM, RAG
-├── data/
-│   ├── seed/          ← Hand-crafted knowledge (JSON)
-│   └── synthetic_qa/  ← Generated training pairs
-├── frontend-integration/ ← React Native components
-├── models/            ← Saved model checkpoints + GGUF
-├── knowledge_base/    ← Pipeline data stages
-│   ├── raw/           ← Crawled data
-│   ├── cleaned/       ← After cleaning
-│   ├── chunked/       ← After chunking
-│   ├── translated/    ← After translation
-│   └── final/         ← Ready for ChromaDB
-├── requirements.txt
-├── docker-compose.yml
-└── Dockerfile
+├── api/                    FastAPI backend
+│   ├── main.py             App entry, lifespan, CORS, routes
+│   ├── routes/
+│   │   ├── query.py        Text query (with emergency bypass)
+│   │   ├── voice.py        Voice input/output, STT, TTS
+│   │   ├── emergency.py    Hardcoded emergency responses
+│   │   ├── places.py       Places API (loads all data sources)
+│   │   ├── auth.py         Register, login, profile (JWT)
+│   │   └── sessions.py     Chat history, conversations, stats
+│   ├── services/
+│   │   ├── asr.py          Whisper speech-to-text
+│   │   ├── llm.py          GGUF / Ollama LLM inference
+│   │   ├── rag.py          ChromaDB retrieval
+│   │   ├── tts.py          gTTS text-to-speech
+│   │   └── auth.py         JWT + password hashing
+│   └── models/
+│       ├── database.py     SQLite async (users, sessions, conversations)
+│       └── schemas.py      Pydantic request/response models
+│
+├── static/                 Web frontend (PWA)
+│   ├── index.html          Complete SPA — home, chat, explore, map, SOS, auth, profile
+│   ├── places_geo.json     178 Nashik places with coordinates
+│   ├── manifest.json       PWA manifest
+│   ├── sw.js               Service worker (offline caching)
+│   └── icon-*.png          PWA icons
+│
+├── data/                   Knowledge base source files
+│   ├── kumbh_2027_schedule.json
+│   ├── kumbh_2027_detailed.json      15 detailed Kumbh articles
+│   ├── nashik_complete_places.json   59 places with full details
+│   ├── nashik_culture_history.json   19 culture/history articles
+│   ├── nashik_food_wine.json         Food, wine, restaurant guide
+│   ├── nashik_routes_transport.json  Transport routes
+│   ├── nashik_places.json            Original 12 places
+│   ├── emergency_responses.json      Emergency data
+│   ├── ghats_and_transport.json      Ghats + transport
+│   └── synthetic_qa/                 3,366 QA training pairs
+│
+├── knowledge_base/         Pipeline output stages
+│   ├── raw/                Flattened seed + crawled data
+│   ├── cleaned/            After cleaning
+│   ├── chunked/            After chunking (300-500 word chunks)
+│   ├── deduplicated/       After MinHash deduplication
+│   └── translated/         After translation to 8 languages
+│
+├── vectordb/
+│   ├── ingest_chunks.py    Incremental ChromaDB ingestion
+│   ├── ingest_chroma.py    Full ChromaDB rebuild (legacy)
+│   └── chroma_db/          Persistent vector store (NOT in git)
+│
+├── pipeline/               Data processing pipeline
+│   ├── ingest_all.py       Master: flatten → clean → chunk → dedup
+│   ├── flatten_seed.py     Flatten multilingual JSONs
+│   ├── clean.py            HTML strip, normalize, redact
+│   ├── chunk.py            Split into 300-500 word chunks
+│   ├── deduplicate.py      MD5 + MinHash dedup
+│   └── run_pipeline.py     Sequential pipeline runner
+│
+├── generate/               QA pair generation
+│   ├── qa_generator.py     Ollama-based QA (needs running Ollama)
+│   ├── generate_from_kb.py Template-based QA (no LLM needed)
+│   └── paraphrase.py       Augment with paraphrases
+│
+├── crawler/                Web scrapers
+│   ├── run_all_crawlers.py Master crawler runner
+│   └── spiders/
+│       ├── wikipedia_spider.py   128 Wikipedia articles
+│       ├── osm_places.py         OpenStreetMap data
+│       ├── news_crawler.py       Indian news sites
+│       └── indic_datasets.py     HuggingFace datasets
+│
+├── training/
+│   └── train_qlora.py      QLoRA fine-tuning (Unsloth + HF PEFT)
+│
+├── translate/
+│   └── batch_translate.py  IndicTrans2 EN→Indic translation
+│
+├── models/                 Model files (NOT in git)
+│   └── kumbh_model_q4_k_m.gguf   Fine-tuned GGUF (1.8GB)
+│
+├── Yatri_AI_Training.ipynb Google Colab training notebook
+├── requirements.txt        Python dependencies
+├── Dockerfile              Container config
+├── docker-compose.yml      Docker services
+└── .gitignore
 ```
 
 ---
 
-## Estimated Timeline
+## API Endpoints
 
-| Week | Task |
-|------|------|
-| 1 | Install deps, run crawlers, build knowledge base |
-| 2 | Run pipeline, translate, generate QA pairs |
-| 3 | Fine-tune model on cloud (A100, ~$10) |
-| 4 | Set up API server, test with ChromaDB |
-| 5 | Connect React Native app, test voice |
-| 6 | Native speaker testing (Hindi/Marathi), iterate |
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| `GET` | `/` | Web app (PWA) | No |
+| `POST` | `/api/v1/query` | Text query → response (emergency bypass built-in) | No |
+| `POST` | `/api/v1/voice/input` | Voice → Voice (full pipeline) | No |
+| `POST` | `/api/v1/voice/stt` | Speech → Text only | No |
+| `POST` | `/api/v1/voice/tts` | Text → Speech (MP3) | No |
+| `POST` | `/api/v1/emergency` | Emergency response (instant, no LLM) | No |
+| `GET` | `/api/v1/emergency/contacts` | All helpline numbers | No |
+| `GET` | `/api/v1/places` | All places (178+) | No |
+| `GET` | `/api/v1/places/{id}` | Place detail | No |
+| `POST` | `/api/v1/auth/register` | Create account | No |
+| `POST` | `/api/v1/auth/login` | Sign in → JWT token | No |
+| `GET` | `/api/v1/auth/profile` | User profile | Yes |
+| `GET` | `/api/v1/sessions/conversations` | Chat history list | Yes |
+| `POST` | `/api/v1/sessions/log` | Save chat message | Optional |
+| `GET` | `/api/v1/health` | Server status | No |
+| `WS` | `/ws/chat` | WebSocket streaming | No |
 
 ---
 
-## Cost Estimate (one-time)
+## Features
 
-| Item | Cost |
-|------|------|
-| Cloud GPU training (A100 ~6hrs) | ~$9 |
-| Storage (server SSD 200GB) | ~$5/mo |
-| Model download (Qwen2.5-7B) | Free |
-| All datasets | Free |
-| **Total one-time** | **~$10** |
+### Voice Assistant
+- Tap mic, speak in any language → auto-detects → responds in same language
+- Emergency keywords bypass LLM for instant response (<100ms)
+- Chat history saved locally + server-side (if signed in)
+- Conversation management (new chat, rename, delete, switch)
 
-**Runtime cost: $0** — everything runs locally, no API fees ever.
+### Map (OpenStreetMap + OSRM)
+- 178 places tagged with category-colored markers
+- Filter by: temples, ghats, tourist, wineries, food, hotels, transport, emergency, markets
+- From → To routing with turn-by-turn directions (OSRM, free)
+- Set location via GPS, search, or map tap
+- Integrated with assistant — "how to reach X" shows route button
+
+### Emergency SOS
+- 6 scenarios: Medical, Missing Person, Stampede, Fire, Drowning, Lost Items
+- 7 helplines with tap-to-call
+- Hardcoded responses in Hindi, Marathi, English — no server needed
+- Nearest hospital finder on map
+
+### Explore
+- Rich cards with images, ratings, timings, fees
+- Category filters, expandable details
+- "View on Map" and "Get Directions" per place
+
+### Auth & Profile
+- Register / Login with JWT
+- Language preference (changes entire UI)
+- Chat history synced across devices
+- User stats (queries, languages used)
+
+### PWA
+- Installable on mobile (Add to Home Screen)
+- Fullscreen app mode
+- Offline caching via service worker
+
+---
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OLLAMA_MODEL` | `qwen2.5:1.5b` | Ollama fallback model (only if no GGUF) |
+| `WHISPER_MODEL` | `small` | Whisper model size (tiny/base/small/medium/large-v3) |
+| `JWT_SECRET` | `nashik-kumbh-2027-secret-key` | Change in production! |
+
+Example:
+```bash
+OLLAMA_MODEL=qwen2.5:3b WHISPER_MODEL=base python3 -m uvicorn api.main:app --host 0.0.0.0 --port 8000
+```
+
+---
+
+## Training (Optional)
+
+Fine-tuning improves response quality but is NOT required — the app works with base Ollama models + RAG.
+
+**The model included in this repo (`models/kumbh_model_q4_k_m.gguf`) was trained using this process.**
+You do NOT need to retrain unless you want to improve it with more data.
+
+### How It Was Trained (Google Colab, Free T4 GPU)
+
+- **Base model:** Qwen2.5-3B-Instruct (fits T4's 15GB VRAM in 4-bit)
+- **Method:** QLoRA (4-bit quantization, LoRA r=16, alpha=32)
+- **Data:** 3,366 QA pairs from `data/synthetic_qa/all_languages_combined.jsonl`
+- **Epochs:** 3, batch size 2, gradient accumulation 8
+- **Training time:** ~20 minutes on free Colab T4
+- **Exported:** Q4_K_M GGUF quantization (1.8GB)
+
+### To Retrain (if you add more data)
+
+1. Upload `Yatri_AI_Training.ipynb` to [Google Colab](https://colab.research.google.com)
+2. Set runtime to **T4 GPU** (`Runtime → Change runtime type`)
+3. Run all cells — it will ask you to upload `all_languages_combined.jsonl`
+4. Download the output `kumbh_model_q4_k_m.gguf` (~1.8GB)
+5. Replace `models/kumbh_model_q4_k_m.gguf` and restart server
+
+### Training on Cloud GPU (RunPod/Lambda)
+
+```bash
+python3 training/train_qlora.py \
+  --model qwen2.5-3b \
+  --data data/synthetic_qa/all_languages_combined.jsonl \
+  --max-steps 500
+```
+
+### Expanding the Dataset
+
+```bash
+# Generate more QA pairs from knowledge base (no GPU needed)
+python3 generate/generate_from_kb.py --target 10000
+
+# Generate with Ollama (slower, higher quality)
+python3 generate/qa_generator.py --model qwen2.5:1.5b --max-pairs 5000
+
+# Re-run pipeline to process new data
+python3 pipeline/ingest_all.py
+
+# Rebuild ChromaDB
+python3 vectordb/ingest_chunks.py
+```
+
+---
+
+## Docker Deployment
+
+```bash
+# Build and run
+docker-compose up -d
+
+# Or build manually
+docker build -t yatri-ai .
+docker run -p 8000:8000 -v ./models:/app/models -v ./vectordb/chroma_db:/app/vectordb/chroma_db yatri-ai
+```
+
+---
+
+## Rebuilding Everything from Scratch
+
+If you want to rebuild the entire pipeline (not needed if cloning with data):
+
+```bash
+# 1. Flatten all seed data
+python3 pipeline/ingest_all.py
+
+# 2. Build ChromaDB
+python3 vectordb/ingest_chunks.py
+
+# 3. Generate QA pairs
+python3 generate/generate_from_kb.py --target 8000
+
+# 4. (Optional) Run crawlers for more data
+python3 crawler/run_all_crawlers.py
+
+# 5. (Optional) Train model on Colab
+# Upload Yatri_AI_Training.ipynb + data/synthetic_qa/all_languages_combined.jsonl
+```
+
+---
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| `Ollama error: timed out` | Model too large for RAM. Use `qwen2.5:1.5b` instead of 7b |
+| `float16 not supported` | CPU-only machine. Server auto-detects and uses int8 |
+| `No module 'TTS'` | Coqui TTS not installed. gTTS fallback works fine |
+| `pydub/audioop error` | Python 3.13 removed audioop. Already fixed — gTTS returns MP3 directly |
+| Whisper detects wrong language | Use `small` model instead of `base`: `WHISPER_MODEL=small` |
+| ChromaDB segfault | Delete `vectordb/chroma_db/` and re-run `ingest_chunks.py` |
+| Slow responses (>30s) | Use smaller model: `OLLAMA_MODEL=qwen2.5:1.5b` |
+| Emergency query gives bad answer | Emergency keywords trigger hardcoded bypass — working as intended |
+
+---
+
+## Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| Backend | FastAPI + Uvicorn |
+| LLM | Qwen2.5-3B fine-tuned, Q4_K_M GGUF via llama-cpp-python (Ollama fallback) |
+| ASR (Speech-to-Text) | faster-whisper (Whisper small) |
+| TTS (Text-to-Speech) | gTTS (Google TTS) |
+| RAG | ChromaDB + intfloat/multilingual-e5-large |
+| Database | SQLite (aiosqlite) |
+| Auth | JWT (PyJWT) + sha256_crypt |
+| Frontend | Vanilla HTML/CSS/JS (PWA) |
+| Maps | Leaflet.js + OpenStreetMap + OSRM routing |
+| Icons | Remix Icons |
+| Fonts | Poppins + Noto Sans Devanagari |
+| Training | QLoRA via Unsloth / HuggingFace PEFT |
+
+---
+
+## License
+
+MIT
+
+---
+
+*Built for Nashik Simhastha Kumbh Mela 2027*
