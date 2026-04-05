@@ -10,9 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg libsndfile1 build-essential && \
     rm -rf /var/lib/apt/lists/*
 
-# Python deps
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Python deps (deploy-only, no training/crawling deps)
+COPY requirements-deploy.txt .
+RUN pip install --no-cache-dir -r requirements-deploy.txt
 
 # Copy everything
 COPY api/ ./api/
