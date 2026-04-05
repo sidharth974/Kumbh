@@ -20,18 +20,44 @@ _sessions: dict[str, deque] = defaultdict(lambda: deque(maxlen=10))
 
 
 def detect_language(text: str, hint: Optional[str] = None) -> str:
+    if hint and hint not in ("auto", "en"):
+        return hint
+
+    # Quick script-based detection (more reliable than langdetect for Indian languages)
+    import unicodedata
+    script_counts = {}
+    for ch in text:
+        try:
+            name = unicodedata.name(ch, '')
+            if 'DEVANAGARI' in name: script_counts['devanagari'] = script_counts.get('devanagari', 0) + 1
+            elif 'GUJARATI' in name: script_counts['gu'] = script_counts.get('gu', 0) + 1
+            elif 'TAMIL' in name: script_counts['ta'] = script_counts.get('ta', 0) + 1
+            elif 'TELUGU' in name: script_counts['te'] = script_counts.get('te', 0) + 1
+            elif 'KANNADA' in name: script_counts['kn'] = script_counts.get('kn', 0) + 1
+            elif 'MALAYALAM' in name: script_counts['ml'] = script_counts.get('ml', 0) + 1
+        except: pass
+
+    # If Devanagari script detected — could be Hindi or Marathi
+    if script_counts.get('devanagari', 0) > 2:
+        # Marathi-specific words
+        marathi_markers = ['आहे', 'नाही', 'कसे', 'काय', 'मध्ये', 'पासून', 'आणि', 'तुम्ही', 'त्या', 'हे']
+        if any(m in text for m in marathi_markers):
+            return 'mr'
+        return 'hi'
+    if script_counts.get('gu', 0) > 2: return 'gu'
+    if script_counts.get('ta', 0) > 2: return 'ta'
+    if script_counts.get('te', 0) > 2: return 'te'
+    if script_counts.get('kn', 0) > 2: return 'kn'
+    if script_counts.get('ml', 0) > 2: return 'ml'
+
+    # Fallback to langdetect for romanized text
     if hint and hint != "auto":
         return hint
     try:
         lang = detect(text)
-        # Map langdetect codes to our supported set
-        mapping = {
-            "hi": "hi", "mr": "mr", "gu": "gu",
-            "ta": "ta", "te": "te", "kn": "kn", "ml": "ml",
-            "en": "en",
-        }
+        mapping = {"hi": "hi", "mr": "mr", "gu": "gu", "ta": "ta", "te": "te", "kn": "kn", "ml": "ml", "en": "en"}
         return mapping.get(lang, "en")
-    except Exception:
+    except:
         return "en"
 
 

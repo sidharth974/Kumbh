@@ -32,14 +32,25 @@ SYSTEM_PROMPTS = {
 }
 
 
+LANG_INSTRUCTION = {
+    "en": "Answer in English with detail.",
+    "hi": "हिंदी में विस्तार से उत्तर दें।",
+    "mr": "मराठीत सविस्तर उत्तर द्या।",
+    "gu": "ગુજરાતીમાં વિગતવાર જવાબ આપો।",
+    "ta": "தமிழில் விரிவாக பதிலளிக்கவும்.",
+    "te": "తెలుగులో వివరంగా సమాధానం ఇవ్వండి.",
+    "kn": "ಕನ್ನಡದಲ್ಲಿ ವಿವರವಾಗಿ ಉತ್ತರಿಸಿ.",
+    "ml": "മലയാളത്തിൽ വിശദമായി ഉത്തരം നൽകൂ.",
+}
+
 def _build_prompt(query: str, context: list[str], language: str) -> list[dict]:
     system = SYSTEM_PROMPTS.get(language, SYSTEM_PROMPTS["en"])
-    # Keep context compact — just the text, no numbering
     context_block = "\n---\n".join(context) if context else ""
+    lang_inst = LANG_INSTRUCTION.get(language, LANG_INSTRUCTION["en"])
     if context_block:
-        user_content = f"{context_block}\n\nAnswer this in 2-3 sentences using the info above: {query}"
+        user_content = f"{context_block}\n\nQuestion: {query}\n{lang_inst}"
     else:
-        user_content = query
+        user_content = f"{query}\n{lang_inst}"
     return [
         {"role": "system", "content": system},
         {"role": "user", "content": user_content},
@@ -140,7 +151,7 @@ class LLMService:
         context: list[str],
         language: str = "en",
         domain: str = "general",
-        max_tokens: int = 150,
+        max_tokens: int = 350,
         temperature: float = 0.3,
     ) -> str:
         # Limit context for CPU speed: top 3 chunks, max 1500 chars each
