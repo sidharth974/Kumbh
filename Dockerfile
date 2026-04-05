@@ -14,16 +14,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements-deploy.txt .
 RUN pip install --no-cache-dir -r requirements-deploy.txt
 
-# Copy everything
+# Copy app code + data
 COPY api/ ./api/
 COPY data/ ./data/
 COPY static/ ./static/
+COPY knowledge_base/ ./knowledge_base/
 COPY vectordb/ ./vectordb/
 RUN mkdir -p models
-COPY knowledge_base/ ./knowledge_base/
+
+# Build ChromaDB during Docker build (cached — won't rerun unless KB changes)
+RUN python vectordb/ingest_chunks.py
 
 # HF Spaces uses 7860, standard uses 8000
 ENV PORT=7860
 EXPOSE 7860
 
-CMD uvicorn api.main:app --host 0.0.0.0 --port ${PORT}
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "7860"]
