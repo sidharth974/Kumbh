@@ -86,8 +86,9 @@ class LLMService:
             self._llama = Llama(
                 model_path=str(path),
                 n_gpu_layers=-1,
-                n_ctx=2048,
-                n_batch=256,
+                n_ctx=1024,     # smaller context = faster
+                n_batch=128,    # smaller batch = less memory
+                n_threads=2,    # match HF free CPU cores
                 verbose=False,
             )
             self._backend = "gguf"
@@ -151,7 +152,7 @@ class LLMService:
         context: list[str],
         language: str = "en",
         domain: str = "general",
-        max_tokens: int = 350,
+        max_tokens: int = 200,
         temperature: float = 0.3,
     ) -> str:
         # Limit context for CPU speed: top 3 chunks, max 1500 chars each
