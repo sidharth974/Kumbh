@@ -53,25 +53,61 @@ START_TIME = time.time()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Pre-load all models on startup."""
+    """Pre-load models on startup. Heavy tasks run in background to avoid HF timeout."""
+    import threading
     log.info("=== Nashik Kumbh Mela 2027 AI Backend starting ===")
     log.info("Initializing database...")
     await db.init_db()
+
+    # Load RAG (fast — just opens ChromaDB)
     log.info("Loading RAG / ChromaDB...")
-    # Auto-build ChromaDB if empty (first deploy / fresh clone)
     rag = get_rag()
-    if rag.doc_count() == 0:
-        log.info("ChromaDB is empty — building from knowledge base (one-time)...")
-        import subprocess, sys
-        subprocess.run([sys.executable, "vectordb/ingest_chunks.py"], cwd=str(Path(__file__).parent.parent))
-        log.info("ChromaDB built. Reloading...")
-        rag = get_rag(force_reload=True)
-    log.info("Loading LLM...")
-    get_llm()
-    log.info("Loading Whisper ASR...")
-    get_asr()
+    doc_count = rag.doc_count()
+    log.info(f"ChromaDB has {doc_count} documents")
+
+    # Load TTS (instant)
     log.info("Loading TTS...")
     get_tts()
+
+    log.info("=== Server ready (basic). Loading heavy models in background... ===")
+
+    # Heavy loading in background thread (LLM download + Whisper + ChromaDB build)
+    def background_init():
+        import subprocess, sys
+
+        # Build ChromaDB if empty
+        if doc_count == 0:
+            log.info("[BG] ChromaDB empty — building from knowledge base...")
+            try:
+                subprocess.run(
+                    [sys.executable, "vectordb/ingest_chunks.py"],
+                    cwd=str(Path(__file__).parent.parent),
+                    timeout=3600,
+                )
+                get_rag(force_reload=True)
+                log.info("[BG] ChromaDB built successfully")
+            except Exception as e:
+                log.error(f"[BG] ChromaDB build failed: {e}")
+
+        # Load LLM (may download 1.9GB GGUF on first run)
+        log.info("[BG] Loading LLM...")
+        try:
+            get_llm()
+            log.info("[BG] LLM ready")
+        except Exception as e:
+            log.error(f"[BG] LLM failed: {e}")
+
+        # Load Whisper ASR
+        log.info("[BG] Loading Whisper ASR...")
+        try:
+            get_asr()
+            log.info("[BG] Whisper ready")
+        except Exception as e:
+            log.error(f"[BG] Whisper failed: {e}")
+
+        log.info("[BG] === All models loaded. Fully operational. ===")
+
+    threading.Thread(target=background_init, daemon=True).start()
     log.info("=== All models loaded. API ready. ===")
     yield
     log.info("Shutting down.")
