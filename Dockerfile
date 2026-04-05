@@ -19,7 +19,7 @@ COPY api/ ./api/
 COPY data/ ./data/
 COPY static/ ./static/
 COPY vectordb/ ./vectordb/
-COPY models/ ./models/
+RUN mkdir -p models
 COPY knowledge_base/ ./knowledge_base/
 
 # HF Spaces uses 7860, standard uses 8000
