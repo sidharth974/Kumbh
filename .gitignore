@@ -14,3 +14,7 @@ node_modules/
 .expo/
 *.log
 .DS_Store
+*.pdf
+*.pptx
+*.html
+generate_*.py
