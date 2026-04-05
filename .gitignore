@@ -7,7 +7,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
-# *.gguf  — pushing fine-tuned model to repo
+*.gguf
 # vectordb/chroma_db/  — pushing pre-built vector DB to repo
 data/yatri.db
 node_modules/

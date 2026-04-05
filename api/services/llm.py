@@ -1,4 +1,4 @@
-"""LLM inference — llama-cpp-python (GGUF) with Ollama fallback."""
+"""LLM inference — auto-downloads GGUF from HuggingFace, falls back to Ollama."""
 
 import logging
 import os
@@ -10,7 +10,13 @@ import httpx
 log = logging.getLogger(__name__)
 
 ROOT = Path(__file__).parent.parent.parent
-MODEL_PATH = os.environ.get("MODEL_PATH", str(ROOT / "models" / "kumbh_model_q4_k_m.gguf"))
+MODELS_DIR = ROOT / "models"
+MODEL_FILENAME = "kumbh_model_q4_k_m.gguf"
+MODEL_PATH = os.environ.get("MODEL_PATH", str(MODELS_DIR / MODEL_FILENAME))
+
+HF_REPO = "siddharthnavnath7/Kumbh"
+HF_MODEL_URL = f"https://huggingface.co/{HF_REPO}/resolve/main/{MODEL_FILENAME}"
+
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:1.5b")
 
@@ -51,22 +57,82 @@ class LLMService:
 
     def _try_load_gguf(self):
         path = Path(MODEL_PATH)
+
+        # Auto-download from HuggingFace if not found locally
         if not path.exists():
-            log.info(f"GGUF model not found at {MODEL_PATH}, will use Ollama")
+            log.info(f"GGUF not found locally. Downloading from HuggingFace ({HF_REPO})...")
+            try:
+                self._download_from_hf(path)
+            except Exception as e:
+                log.warning(f"Could not download GGUF from HuggingFace: {e}")
+
+        if not path.exists():
+            log.info(f"GGUF model not available, will use Ollama")
             return
+
         try:
             from llama_cpp import Llama
             self._llama = Llama(
                 model_path=str(path),
-                n_gpu_layers=-1,   # Use all GPU layers
-                n_ctx=4096,
-                n_batch=512,
+                n_gpu_layers=-1,
+                n_ctx=2048,
+                n_batch=256,
                 verbose=False,
             )
             self._backend = "gguf"
-            log.info(f"GGUF model loaded: {path.name}")
+            log.info(f"GGUF model loaded: {path.name} ({path.stat().st_size / 1e9:.1f}GB)")
         except Exception as e:
             log.warning(f"Could not load GGUF: {e}")
+
+    def _download_from_hf(self, dest: Path):
+        """Download GGUF from HuggingFace Hub."""
+        dest.parent.mkdir(parents=True, exist_ok=True)
+
+        # Try huggingface_hub first (fast, resumable)
+        try:
+            from huggingface_hub import hf_hub_download
+            log.info(f"Downloading via huggingface_hub...")
+            downloaded = hf_hub_download(
+                repo_id=HF_REPO,
+                filename=MODEL_FILENAME,
+                local_dir=str(MODELS_DIR),
+                local_dir_use_symlinks=False,
+            )
+            log.info(f"Downloaded to {downloaded}")
+            return
+        except ImportError:
+            log.info("huggingface_hub not installed, trying direct download...")
+        except Exception as e:
+            log.warning(f"huggingface_hub download failed: {e}")
+
+        # Fallback: direct HTTP download with progress
+        import urllib.request
+        import shutil
+
+        log.info(f"Downloading {MODEL_FILENAME} from {HF_MODEL_URL} (~1.9GB)...")
+        log.info("This is a one-time download. Please wait...")
+
+        tmp_path = dest.with_suffix('.tmp')
+        try:
+            req = urllib.request.Request(HF_MODEL_URL, headers={"User-Agent": "YatriAI/1.0"})
+            with urllib.request.urlopen(req, timeout=600) as resp:
+                total = int(resp.headers.get('Content-Length', 0))
+                downloaded = 0
+                with open(tmp_path, 'wb') as f:
+                    while True:
+                        chunk = resp.read(8 * 1024 * 1024)  # 8MB chunks
+                        if not chunk:
+                            break
+                        f.write(chunk)
+                        downloaded += len(chunk)
+                        if total > 0:
+                            pct = downloaded * 100 // total
+                            log.info(f"  Download progress: {pct}% ({downloaded // 1e6:.0f}MB / {total // 1e6:.0f}MB)")
+            shutil.move(str(tmp_path), str(dest))
+            log.info(f"Download complete: {dest}")
+        except Exception as e:
+            tmp_path.unlink(missing_ok=True)
+            raise RuntimeError(f"Download failed: {e}") from e
 
     def generate(
         self,

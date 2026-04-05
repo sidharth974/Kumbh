@@ -53,9 +53,17 @@ pip install -r requirements.txt
 
 ### 2. Start the Server
 
-> **Everything is pre-built — no extra steps needed:**
-> - Fine-tuned model: `models/kumbh_model_q4_k_m.gguf` (1.8GB) — auto-detected, no Ollama needed
-> - Vector database: `vectordb/chroma_db/` (41MB, 4500+ embedded docs) — ready to use
+> **ChromaDB is pre-built** — `vectordb/chroma_db/` (41MB, 4500+ embedded docs) ready to use.
+> 
+> **Download the fine-tuned model (one time):**
+> ```bash
+> mkdir -p models
+> huggingface-cli download siddharthnavnath7/Kumbh kumbh_model_q4_k_m.gguf --local-dir models
+> ```
+> Or manually from: https://huggingface.co/siddharthnavnath7/Kumbh
+>
+> The server auto-detects `models/kumbh_model_q4_k_m.gguf` — no Ollama needed.
+> If you skip this step, install Ollama and run `ollama pull qwen2.5:1.5b` as fallback.
 
 ```bash
 python3 -m uvicorn api.main:app --host 0.0.0.0 --port 8000

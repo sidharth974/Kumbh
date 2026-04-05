@@ -1,27 +1,29 @@
-FROM nvidia/cuda:12.1.0-cudnn8-runtime-ubuntu22.04
+FROM python:3.11-slim
 
 WORKDIR /app
 
-ENV DEBIAN_FRONTEND=noninteractive
 ENV PYTHONUNBUFFERED=1
+ENV DEBIAN_FRONTEND=noninteractive
 
-# System deps (includes ffmpeg for audio processing)
-RUN apt-get update && apt-get install -y \
-    python3.11 python3.11-pip python3.11-dev \
-    ffmpeg libsndfile1 git curl \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN ln -s /usr/bin/python3.11 /usr/bin/python
+# System deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg libsndfile1 build-essential && \
+    rm -rf /var/lib/apt/lists/*
 
 # Python deps
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# App code
+# Copy everything
 COPY api/ ./api/
 COPY data/ ./data/
+COPY static/ ./static/
 COPY vectordb/ ./vectordb/
+COPY models/ ./models/
+COPY knowledge_base/ ./knowledge_base/
 
-EXPOSE 8000
+# HF Spaces uses 7860, standard uses 8000
+ENV PORT=7860
+EXPOSE 7860
 
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+CMD uvicorn api.main:app --host 0.0.0.0 --port ${PORT}
