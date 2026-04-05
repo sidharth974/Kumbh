@@ -14,7 +14,10 @@ from sentence_transformers import SentenceTransformer
 log = logging.getLogger(__name__)
 
 ROOT = Path(__file__).parent.parent.parent
-CHROMA_DIR = ROOT / "vectordb" / "chroma_db"
+# Use /data for HF Spaces persistent storage, fallback to local
+import os
+_hf_data = Path("/data/chroma_db") if os.path.isdir("/data") else None
+CHROMA_DIR = _hf_data if _hf_data else ROOT / "vectordb" / "chroma_db"
 EMERGENCY_PATH = ROOT / "data" / "emergency_responses.json"
 COLLECTION_NAME = "kumbh_mela_2027"
 EMBEDDING_MODEL = "intfloat/multilingual-e5-large"

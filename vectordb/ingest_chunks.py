@@ -6,16 +6,19 @@ from pathlib import Path
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 log = logging.getLogger(__name__)
 
+import os
 ROOT = Path(__file__).parent.parent
 DEDUP_DIR = ROOT / "knowledge_base" / "deduplicated"
-CHROMA_PATH = ROOT / "vectordb" / "chroma_db"
+# Use /data for HF Spaces persistent storage
+_hf_data = Path("/data/chroma_db") if os.path.isdir("/data") else None
+CHROMA_PATH = _hf_data if _hf_data else ROOT / "vectordb" / "chroma_db"
 BATCH = 24  # small to avoid OOM on 14GB RAM
 
 def main():
     import chromadb
     from sentence_transformers import SentenceTransformer
 
-    log.info("Loading embedding model...")
+    log.info("Loading embedding model: intfloat/multilingual-e5-large")
     embedder = SentenceTransformer("intfloat/multilingual-e5-large")
 
     client = chromadb.PersistentClient(path=str(CHROMA_PATH))

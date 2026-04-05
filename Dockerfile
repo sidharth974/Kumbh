@@ -22,8 +22,8 @@ COPY knowledge_base/ ./knowledge_base/
 COPY vectordb/ ./vectordb/
 RUN mkdir -p models
 
-# Build ChromaDB during Docker build (cached — won't rerun unless KB changes)
-RUN python vectordb/ingest_chunks.py
+# Pre-download the embedding model during build (cached in image)
+RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('intfloat/multilingual-e5-large'); print('Model cached')"
 
 # HF Spaces uses 7860, standard uses 8000
 ENV PORT=7860
