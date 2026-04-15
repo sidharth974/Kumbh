@@ -28,6 +28,7 @@ TTS==0.22.0; python_version < "3.12"
 # resolver conflicts with pinned transformers/torch versions.
 # parler-tts==0.2.3
 gTTS==2.5.3
+edge-tts>=7.0.0
 pydub==0.25.1
 soundfile==0.12.1
 

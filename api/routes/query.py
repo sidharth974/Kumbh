@@ -35,15 +35,20 @@ def detect_language(text: str, hint: Optional[str] = None) -> str:
             elif 'TELUGU' in name: script_counts['te'] = script_counts.get('te', 0) + 1
             elif 'KANNADA' in name: script_counts['kn'] = script_counts.get('kn', 0) + 1
             elif 'MALAYALAM' in name: script_counts['ml'] = script_counts.get('ml', 0) + 1
+            elif 'BENGALI' in name: script_counts['bn'] = script_counts.get('bn', 0) + 1
+            elif 'GURMUKHI' in name: script_counts['pa'] = script_counts.get('pa', 0) + 1
+            elif 'ARABIC' in name: script_counts['ur'] = script_counts.get('ur', 0) + 1
         except: pass
 
     # If Devanagari script detected — could be Hindi or Marathi
     if script_counts.get('devanagari', 0) > 2:
-        # Marathi-specific words
         marathi_markers = ['आहे', 'नाही', 'कसे', 'काय', 'मध्ये', 'पासून', 'आणि', 'तुम्ही', 'त्या', 'हे']
         if any(m in text for m in marathi_markers):
             return 'mr'
         return 'hi'
+    if script_counts.get('bn', 0) > 2: return 'bn'
+    if script_counts.get('pa', 0) > 2: return 'pa'
+    if script_counts.get('ur', 0) > 2: return 'ur'
     if script_counts.get('gu', 0) > 2: return 'gu'
     if script_counts.get('ta', 0) > 2: return 'ta'
     if script_counts.get('te', 0) > 2: return 'te'
@@ -55,7 +60,11 @@ def detect_language(text: str, hint: Optional[str] = None) -> str:
         return hint
     try:
         lang = detect(text)
-        mapping = {"hi": "hi", "mr": "mr", "gu": "gu", "ta": "ta", "te": "te", "kn": "kn", "ml": "ml", "en": "en"}
+        mapping = {
+            "hi": "hi", "mr": "mr", "gu": "gu", "ta": "ta", "te": "te",
+            "kn": "kn", "ml": "ml", "en": "en", "bn": "bn", "pa": "pa",
+            "ur": "hi",  # Urdu → Hindi for spoken
+        }
         return mapping.get(lang, "en")
     except:
         return "en"
@@ -116,8 +125,13 @@ async def text_query(
                 session_id=session_id,
             )
 
-    # Retrieve context
+    # Retrieve context — always include English docs for better coverage
     docs = rag.retrieve(req.query, language=language, domain=req.domain, top_k=5)
+    if language != "en":
+        en_docs = rag.retrieve(req.query, language="en", domain=req.domain, top_k=3)
+        # Deduplicate by first 80 chars
+        seen = {d["text"][:80] for d in docs}
+        docs += [d for d in en_docs if d["text"][:80] not in seen]
     context_texts = [d["text"] for d in docs]
 
     # Add conversation history to context if session exists
@@ -136,13 +150,16 @@ async def text_query(
         domain=domain,
     )
 
+    # Detect actual response language (Groq auto-matches user language)
+    response_lang = detect_language(response_text, hint=language)
+
     # Update session history
     _sessions[session_id].append(("User", req.query))
     _sessions[session_id].append(("Assistant", response_text))
 
     return QueryResponse(
         response=response_text,
-        language=language,
+        language=response_lang,
         sources=[
             SourceDoc(text=d["text"][:200], domain=d["domain"], source=d["source"], score=d["score"])
             for d in docs[:3]

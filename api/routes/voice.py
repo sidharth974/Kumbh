@@ -36,41 +36,64 @@ async def voice_input(
     audio_bytes = await audio.read()
     ext = audio.filename.rsplit(".", 1)[-1] if audio.filename else "m4a"
 
-    # 2. Transcribe — None or "auto" means auto-detect language
+    # 2. Transcribe
     hint = language if language and language != "auto" else None
     asr_result = asr.transcribe(audio_bytes, hint_language=hint, audio_format=ext)
     transcript = asr_result["text"]
-    detected_lang = asr_result["language"]
 
     if not transcript.strip():
         return VoiceInputResponse(
             audio_base64="",
             transcript="",
             response_text="I couldn't hear anything clearly. Please try again.",
-            language=detected_lang,
+            language=language or "en",
             duration_ms=int((time.time() - t0) * 1000),
         )
 
-    # 3. RAG retrieval
+    # 3. Detect language:
+    #    - User explicitly chose a language → trust that
+    #    - Auto mode → use script detection on transcript (Devanagari, Tamil, etc.)
+    #      with Whisper's guess as a fallback for Latin-script languages
+    if language and language != "auto":
+        detected_lang = language
+    else:
+        script_lang = detect_language(transcript, hint=None)
+        whisper_lang = asr_result["language"]
+        whisper_conf = asr_result.get("confidence", 0)
+        # Script detection is reliable for non-Latin scripts
+        # For Latin script (English), use Whisper if confident, else default to English
+        if script_lang != "en":
+            detected_lang = script_lang
+        elif whisper_conf > 0.7:
+            detected_lang = whisper_lang
+        else:
+            detected_lang = script_lang
+
+    # 4. RAG retrieval — also search English as fallback for better context
     docs = rag.retrieve(transcript, language=detected_lang, top_k=3)
+    if len(docs) < 2 and detected_lang != "en":
+        docs += rag.retrieve(transcript, language="en", top_k=2)
     context_texts = [d["text"] for d in docs]
 
-    # 4. LLM generation
+    # 5. LLM generation
     response_text = llm.generate(
         query=transcript,
         context=context_texts,
         language=detected_lang,
     )
 
-    # 5. TTS
-    audio_out = tts.synthesize(response_text, detected_lang)
+    # 6. Detect language of response for correct TTS voice
+    response_lang = detect_language(response_text, hint=detected_lang)
+
+    # 7. TTS
+    audio_out = tts.synthesize(response_text, response_lang)
     audio_b64 = base64.b64encode(audio_out).decode("utf-8") if audio_out else ""
 
     return VoiceInputResponse(
         audio_base64=audio_b64,
         transcript=transcript,
         response_text=response_text,
-        language=detected_lang,
+        language=response_lang,
         duration_ms=int((time.time() - t0) * 1000),
     )
 
@@ -137,11 +160,25 @@ async def voice_websocket(
             audio_bytes = base64.b64decode(audio_b64)
 
             # Transcribe
+            hint = language_hint if language_hint and language_hint != "auto" else None
             asr_result = asr.transcribe(
-                audio_bytes, hint_language=language_hint, audio_format=audio_format
+                audio_bytes, hint_language=hint, audio_format=audio_format
             )
             transcript = asr_result["text"]
-            lang = asr_result["language"]
+
+            # Detect language
+            if language_hint and language_hint != "auto":
+                lang = language_hint
+            else:
+                script_lang = detect_language(transcript, hint=None)
+                whisper_lang = asr_result["language"]
+                whisper_conf = asr_result.get("confidence", 0)
+                if script_lang != "en":
+                    lang = script_lang
+                elif whisper_conf > 0.7:
+                    lang = whisper_lang
+                else:
+                    lang = script_lang
 
             await websocket.send_json({"type": "transcript", "text": transcript, "language": lang})
 
@@ -149,8 +186,10 @@ async def voice_websocket(
                 await websocket.send_json({"type": "done"})
                 continue
 
-            # RAG
+            # RAG — also search English for better context
             docs = rag.retrieve(transcript, language=lang, top_k=3)
+            if len(docs) < 2 and lang != "en":
+                docs += rag.retrieve(transcript, language="en", top_k=2)
             context_texts = [d["text"] for d in docs]
 
             # Stream LLM tokens
@@ -161,8 +200,9 @@ async def voice_websocket(
 
             response_text = "".join(full_response)
 
-            # TTS
-            audio_out = tts.synthesize(response_text, lang)
+            # TTS — detect response language for correct voice
+            response_lang = detect_language(response_text, hint=lang)
+            audio_out = tts.synthesize(response_text, response_lang)
             if audio_out:
                 audio_b64_out = base64.b64encode(audio_out).decode("utf-8")
                 await websocket.send_json({"type": "audio", "data": audio_b64_out})

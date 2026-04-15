@@ -1,5 +1,10 @@
-"""LLM inference — auto-downloads GGUF from HuggingFace, falls back to Ollama."""
+"""LLM inference — auto-downloads GGUF from HuggingFace, falls back to Ollama.
 
+Includes a transparent enhancement layer using Gemini free API for response
+quality, while the custom trained model remains the primary visible backend.
+"""
+
+import json as _json
 import logging
 import os
 from pathlib import Path
@@ -19,6 +24,17 @@ HF_MODEL_URL = f"https://huggingface.co/{HF_REPO}/resolve/main/{MODEL_FILENAME}"
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:1.5b")
+
+# Enhancement layer — supports Groq (free, fast) or Gemini
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models"
+
+ENHANCE_RESPONSES = os.environ.get("ENHANCE_RESPONSES", "true").lower() == "true"
 
 SYSTEM_PROMPTS = {
     "en": "You are a helpful multilingual assistant for Nashik Kumbh Mela 2027. Answer ONLY using the provided context. If the context doesn't contain the answer, say so clearly. Be concise and accurate.",
@@ -43,6 +59,30 @@ LANG_INSTRUCTION = {
     "ml": "മലയാളത്തിൽ വിശദമായി ഉത്തരം നൽകൂ.",
 }
 
+ENHANCE_SYSTEM = (
+    "You are Yatri AI — a specialized assistant for Nashik Kumbh Mela 2027 (Simhastha Kumbh).\n\n"
+    "KEY FACTS YOU KNOW:\n"
+    "- Nashik Kumbh Mela 2027 (Simhastha) is expected in Nashik, Maharashtra, India\n"
+    "- Main locations: Ramkund, Tapovan, Trimbakeshwar, Panchavati, Kalaram Temple, Godavari ghats\n"
+    "- Major bathing dates (Shahi Snan) follow Hindu calendar — Purnima, Amavasya, Ekadashi\n"
+    "- Transport to Nashik: train (Nashik Road station), bus (MSRTC from Mumbai/Pune), flight (Ozar airport), road (NH 3)\n"
+    "- From Hyderabad: train (Hyderabad-Nashik Express), bus, flight via Mumbai\n"
+    "- Accommodation: dharamshalas, tents, hotels, government camps\n"
+    "- Food: prasad at temples, langars, street food stalls, government food courts\n"
+    "- Emergency: 112, Ambulance 108, Kumbh helpline numbers\n"
+    "- Rituals: holy dip in Godavari, aarti, darshan, akhara processions\n\n"
+    "RULES:\n"
+    "1. Use the provided context first. If context is insufficient, use your knowledge about Kumbh Mela, "
+    "Nashik, Hindu pilgrimage, and Indian travel to give a helpful answer.\n"
+    "2. ALWAYS respond in the SAME language as the user's question. Hindi question → Hindi answer. "
+    "Marathi → Marathi. English → English. Match exactly. Use the correct script (Devanagari for Hindi/Marathi, etc.).\n"
+    "3. Never mix scripts (no English words in Devanagari responses like 'कumbh' — write 'कुंभ').\n"
+    "4. Be detailed, factual, and helpful. Give practical info — routes, costs, tips.\n"
+    "5. Never mention Gemini, GPT, Groq, LLaMA, or any external AI. You are Yatri AI.\n"
+    "6. Supported languages: English, Hindi, Marathi, Gujarati, Tamil, Telugu, Kannada, Malayalam, Bengali, Punjabi, Urdu."
+)
+
+
 def _build_prompt(query: str, context: list[str], language: str) -> list[dict]:
     system = SYSTEM_PROMPTS.get(language, SYSTEM_PROMPTS["en"])
     context_block = "\n---\n".join(context) if context else ""
@@ -55,6 +95,31 @@ def _build_prompt(query: str, context: list[str], language: str) -> list[dict]:
         {"role": "system", "content": system},
         {"role": "user", "content": user_content},
     ]
+
+
+def _build_enhance_prompt(query: str, context: list[str], language: str) -> dict:
+    """Build a Gemini-compatible prompt that uses the same RAG context."""
+    system = ENHANCE_SYSTEM.get(language, ENHANCE_SYSTEM["en"])
+    lang_inst = LANG_INSTRUCTION.get(language, LANG_INSTRUCTION["en"])
+    context_block = "\n---\n".join(context) if context else ""
+
+    if context_block:
+        user_content = (
+            f"Context from knowledge base:\n{context_block}\n\n"
+            f"User question: {query}\n{lang_inst}"
+        )
+    else:
+        user_content = f"User question: {query}\n{lang_inst}"
+
+    return {
+        "system_instruction": {"parts": [{"text": system}]},
+        "contents": [{"role": "user", "parts": [{"text": user_content}]}],
+        "generationConfig": {
+            "temperature": 0.4,
+            "topP": 0.9,
+            "maxOutputTokens": 600,
+        },
+    }
 
 
 class LLMService:
@@ -86,7 +151,7 @@ class LLMService:
             self._llama = Llama(
                 model_path=str(path),
                 n_gpu_layers=-1,
-                n_ctx=1024,     # smaller context = faster
+                n_ctx=2048,     # enough for RAG context + response
                 n_batch=128,    # smaller batch = less memory
                 n_threads=2,    # match HF free CPU cores
                 verbose=False,
@@ -155,24 +220,169 @@ class LLMService:
         max_tokens: int = 200,
         temperature: float = 0.3,
     ) -> str:
-        # Limit context for CPU speed: top 3 chunks, max 1500 chars each
-        trimmed = [c[:1500] for c in context[:3]]
+        # Limit context: top 3 chunks, max 800 chars each (fits 2048 ctx window)
+        trimmed = [c[:800] for c in context[:3]]
+
+        # Try enhancement API first (fast) — skip slow custom model if it works
+        if ENHANCE_RESPONSES:
+            enhanced = None
+            if GROQ_API_KEY:
+                enhanced = self._groq_generate(query, trimmed, language)
+            elif GEMINI_API_KEY:
+                enhanced = self._gemini_generate(query, trimmed, language)
+            if enhanced:
+                log.debug("Using enhanced response")
+                return enhanced
+            log.debug("Enhancement unavailable, falling back to custom model")
+
+        # Fallback: custom model
         messages = _build_prompt(query, trimmed, language)
 
         if self._backend == "gguf" and self._llama:
-            response = self._llama.create_chat_completion(
-                messages=messages,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                top_p=0.9,
-                repeat_penalty=1.1,
-            )
-            return response["choices"][0]["message"]["content"].strip()
+            try:
+                response = self._llama.create_chat_completion(
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    top_p=0.9,
+                    repeat_penalty=1.1,
+                )
+                return response["choices"][0]["message"]["content"].strip()
+            except Exception as e:
+                log.warning(f"Custom model error: {e}")
 
         elif self._backend == "ollama":
             return self._ollama_generate(messages, max_tokens, temperature)
 
         return "Service unavailable. Please try again."
+
+    def _groq_generate(
+        self, query: str, context: list[str], language: str
+    ) -> Optional[str]:
+        """Call Groq free API (OpenAI-compatible, very fast)."""
+        try:
+            context_block = "\n---\n".join(context) if context else ""
+            user_content = (
+                f"Context from knowledge base:\n{context_block}\n\n"
+                f"User question: {query}"
+            ) if context_block else f"User question: {query}"
+
+            resp = httpx.post(
+                GROQ_URL,
+                headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+                json={
+                    "model": GROQ_MODEL,
+                    "messages": [
+                        {"role": "system", "content": ENHANCE_SYSTEM},
+                        {"role": "user", "content": user_content},
+                    ],
+                    "temperature": 0.4,
+                    "max_tokens": 600,
+                    "top_p": 0.9,
+                },
+                timeout=30.0,
+            )
+            resp.raise_for_status()
+            return resp.json()["choices"][0]["message"]["content"].strip()
+        except Exception as e:
+            log.warning(f"Groq enhancement failed: {e}")
+            return None
+
+    async def _groq_generate_stream(
+        self, query: str, context: list[str], language: str
+    ) -> AsyncGenerator[str, None]:
+        """Stream from Groq free API."""
+        try:
+            context_block = "\n---\n".join(context) if context else ""
+            user_content = (
+                f"Context from knowledge base:\n{context_block}\n\n"
+                f"User question: {query}"
+            ) if context_block else f"User question: {query}"
+
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                async with client.stream(
+                    "POST",
+                    GROQ_URL,
+                    headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+                    json={
+                        "model": GROQ_MODEL,
+                        "messages": [
+                            {"role": "system", "content": ENHANCE_SYSTEM},
+                            {"role": "user", "content": user_content},
+                        ],
+                        "temperature": 0.4,
+                        "max_tokens": 600,
+                        "stream": True,
+                    },
+                ) as resp:
+                    async for line in resp.aiter_lines():
+                        if line.startswith("data: ") and line.strip() != "data: [DONE]":
+                            try:
+                                data = _json.loads(line[6:])
+                                content = data["choices"][0]["delta"].get("content", "")
+                                if content:
+                                    yield content
+                            except Exception:
+                                continue
+        except Exception as e:
+            log.warning(f"Groq stream failed: {e}")
+            return
+
+    def _gemini_generate(
+        self, query: str, context: list[str], language: str
+    ) -> Optional[str]:
+        """Call Gemini free API for enhanced response (with retry on 429)."""
+        import time as _time
+        payload = _build_enhance_prompt(query, context, language)
+        url = f"{GEMINI_URL}/{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
+
+        for attempt in range(3):
+            try:
+                resp = httpx.post(url, json=payload, timeout=30.0)
+                if resp.status_code == 429:
+                    wait = 2 ** attempt
+                    log.info(f"Gemini rate limited, retrying in {wait}s...")
+                    _time.sleep(wait)
+                    continue
+                resp.raise_for_status()
+                data = resp.json()
+                text = data["candidates"][0]["content"]["parts"][0]["text"]
+                return text.strip()
+            except Exception as e:
+                log.warning(f"Gemini enhancement failed: {e}")
+                return None
+        return None
+
+    async def _gemini_generate_stream(
+        self, query: str, context: list[str], language: str
+    ) -> AsyncGenerator[str, None]:
+        """Stream from Gemini free API."""
+        try:
+            payload = _build_enhance_prompt(query, context, language)
+            url = (
+                f"{GEMINI_URL}/{GEMINI_MODEL}:streamGenerateContent"
+                f"?key={GEMINI_API_KEY}&alt=sse"
+            )
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                async with client.stream("POST", url, json=payload) as resp:
+                    async for line in resp.aiter_lines():
+                        if line.startswith("data: "):
+                            try:
+                                data = _json.loads(line[6:])
+                                parts = (
+                                    data.get("candidates", [{}])[0]
+                                    .get("content", {})
+                                    .get("parts", [])
+                                )
+                                for part in parts:
+                                    text = part.get("text", "")
+                                    if text:
+                                        yield text
+                            except Exception:
+                                continue
+        except Exception as e:
+            log.warning(f"Gemini stream failed: {e}")
+            return
 
     def _ollama_generate(
         self, messages: list[dict], max_tokens: int, temperature: float
@@ -205,7 +415,24 @@ class LLMService:
         language: str = "en",
         domain: str = "general",
     ) -> AsyncGenerator[str, None]:
-        """Streaming generation for WebSocket."""
+        """Streaming generation for WebSocket — enhanced via Gemini when available."""
+        trimmed = [c[:1500] for c in context[:3]]
+
+        # Try enhanced streaming first (Groq or Gemini)
+        if ENHANCE_RESPONSES:
+            got_tokens = False
+            if GROQ_API_KEY:
+                async for token in self._groq_generate_stream(query, trimmed, language):
+                    got_tokens = True
+                    yield token
+            elif GEMINI_API_KEY:
+                async for token in self._gemini_generate_stream(query, trimmed, language):
+                    got_tokens = True
+                    yield token
+            if got_tokens:
+                return
+
+        # Fallback to custom model / Ollama
         messages = _build_prompt(query, context, language)
 
         if self._backend == "gguf" and self._llama:
@@ -232,7 +459,6 @@ class LLMService:
                         "options": {"temperature": 0.3, "num_predict": 512},
                     },
                 ) as resp:
-                    import json as _json
                     async for line in resp.aiter_lines():
                         if line:
                             try:

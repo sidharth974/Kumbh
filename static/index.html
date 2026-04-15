@@ -978,6 +978,12 @@ body {
 }
 .route-go-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-glow); }
 .route-go-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.travel-mode-btn.active { border-color: #E8652B !important; background: rgba(232,101,43,0.08) !important; color: #C44B1A !important; }
+.travel-mode-btn[data-mode="walking"].active { border-color: #059669 !important; background: rgba(5,150,105,0.08) !important; color: #059669 !important; }
+
+/* Marker cluster overrides */
+.marker-cluster-small, .marker-cluster-medium, .marker-cluster-large { background: transparent !important; }
+.marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div { background: transparent !important; }
 
 .route-info {
   margin-top: 10px; font-size: 13px; color: var(--ink-light);
@@ -1564,6 +1570,9 @@ body {
         <div class="lang-chip" data-lang="te" onclick="setLang('te',this)">తెలుగు</div>
         <div class="lang-chip" data-lang="kn" onclick="setLang('kn',this)">ಕನ್ನಡ</div>
         <div class="lang-chip" data-lang="ml" onclick="setLang('ml',this)">മലയാളം</div>
+        <div class="lang-chip" data-lang="bn" onclick="setLang('bn',this)">বাংলা</div>
+        <div class="lang-chip" data-lang="pa" onclick="setLang('pa',this)">ਪੰਜਾਬੀ</div>
+        <div class="lang-chip" data-lang="ur" onclick="setLang('ur',this)">اردو</div>
       </div>
       <div class="chat-messages" id="chatMessages">
         <div class="chat-welcome" id="chatWelcome">
@@ -1650,6 +1659,14 @@ body {
             </div>
           </div>
           <button class="route-swap" onclick="swapRoute()" title="Swap"><i class="ri-arrow-up-down-line"></i></button>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button class="travel-mode-btn active" data-mode="driving" onclick="setTravelMode('driving')" style="flex:1;padding:8px;border:1.5px solid #E8652B;border-radius:8px;background:rgba(232,101,43,0.08);color:#C44B1A;font-weight:600;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;font-family:inherit">
+            <i class="ri-car-line"></i> Drive
+          </button>
+          <button class="travel-mode-btn" data-mode="walking" onclick="setTravelMode('walking')" style="flex:1;padding:8px;border:1.5px solid #ddd;border-radius:8px;background:white;color:var(--ink-light);font-weight:600;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;font-family:inherit">
+            <i class="ri-walk-line"></i> Walk
+          </button>
         </div>
         <button class="route-go-btn" id="routeGoBtn" onclick="executeRoute()" disabled>
           <i class="ri-navigation-fill"></i> Navigate
@@ -1884,7 +1901,7 @@ body {
 
 <script>
 const API = window.location.origin;
-let selectedLang = 'auto';
+let selectedLang = localStorage.getItem('yatri_lang') || 'auto';
 let mediaRecorder = null, audioChunks = [], isRecording = false, isProcessing = false, currentAudio = null;
 
 // ═══ EARLY DECLARATIONS (must be before any function that references them) ═══
@@ -1912,7 +1929,7 @@ const HELPLINES = [
   { name: 'Missing Persons', num: '1800-222-2027', icon: 'ri-user-search-fill', color: '#0284C7', bg: '#E0F2FE' },
   { name: 'Women Helpline', num: '1091', icon: 'ri-shield-user-fill', color: '#DB2777', bg: '#FCE7F3' },
 ];
-const LANG_NAMES = { hi:'हिन्दी', mr:'मराठी', en:'English', gu:'ગુજરાતી', ta:'தமிழ்', te:'తెలుగు', kn:'ಕನ್ನಡ', ml:'മലయാളം' };
+const LANG_NAMES = { hi:'हिन्दी', mr:'मराठी', en:'English', gu:'ગુજરાતી', ta:'தமிழ்', te:'తెలుగు', kn:'ಕನ್ನಡ', ml:'മലയാളം', bn:'বাংলা', pa:'ਪੰਜਾਬੀ', ur:'اردو' };
 
 // ═══ CATEGORY HELPERS (shared by Explore, Map, Assistant) ═══
 const MAP_CATS_SHARED = [
@@ -1994,19 +2011,28 @@ checkHealth(); setInterval(checkHealth, 30000);
 function toggleLangPicker() { document.getElementById('langDropdown').classList.toggle('open'); }
 function setLang(lang, el) {
   selectedLang = lang;
+  localStorage.setItem('yatri_lang', lang);
   document.querySelectorAll('.lang-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('langLabel').textContent = el.textContent;
+  if (el) el.classList.add('active');
+  document.getElementById('langLabel').textContent = el ? el.textContent : (LANG_NAMES[lang] || 'Auto-detect');
   document.getElementById('langDropdown').classList.remove('open');
   // Update entire UI language
   if (lang !== 'auto') setUILanguage(lang);
 }
+// Restore saved language on load
+(function restoreLang() {
+  const saved = localStorage.getItem('yatri_lang');
+  if (saved) {
+    const chip = document.querySelector(`.lang-chip[data-lang="${saved}"]`);
+    if (chip) setLang(saved, chip);
+  }
+})();
 
 // ═══ CHAT WITH HISTORY ═══
 function saveChatHistory() {
-  // Save locally (last MAX_HISTORY, no audio)
+  // Save locally (last MAX_HISTORY) — mark bot msgs as having audio for re-fetch
   const trimmed = chatHistory.slice(-MAX_HISTORY).map(m => ({
-    type: m.type, text: m.text, lang: m.lang, time: m.time
+    type: m.type, text: m.text, lang: m.lang, time: m.time, hasAudio: !!m.hasAudio
   }));
   localStorage.setItem('yatri_chat', JSON.stringify(trimmed));
 }
@@ -2055,28 +2081,73 @@ function renderChatHistory() {
     </div>`;
     return;
   }
-  // Render messages and re-run button detection for bot messages
+  // Render messages
   let prevUserText = '';
   chatHistory.forEach((m, idx) => {
     const wrap = document.createElement('div');
     wrap.className = `msg msg-${m.type}`;
     let html = '<div class="msg-bubble">';
-    if (m.type === 'bot' && m.lang) html = `<div class="msg-bubble"><div class="msg-lang">${m.lang}</div>`;
+    if (m.type === 'bot' && m.lang) html = `<div class="msg-bubble"><div class="msg-lang">${(LANG_NAMES[m.lang] || m.lang || '').toUpperCase()}</div>`;
     html += (m.text || '').replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Add Play button for bot messages that had audio — will fetch TTS on click
+    if (m.type === 'bot' && m.hasAudio && m.text && m.lang) {
+      const btnId = 'rp' + idx;
+      const lang = m.lang || 'hi';
+      html += `<br><button class="msg-play" id="${btnId}" onclick="fetchAndPlay('${btnId}','${lang}')"><i class="ri-volume-up-fill"></i> Play</button>`;
+    }
     html += '</div>';
     wrap.innerHTML = html;
     container.appendChild(wrap);
-
     if (m.type === 'user') prevUserText = (m.text || '').toLowerCase();
-
-    // Re-detect places and emergency for bot messages (restores buttons)
-    if (m.type === 'bot' && typeof addButtonsToLastBot === 'function') {
-      addButtonsToLastBot(m.text || '', prevUserText);
-    }
   });
   const last = container.lastElementChild;
   if (last) last.scrollIntoView({ behavior: 'auto', block: 'end' });
+
+  // Re-add buttons after places data is ready
+  _reattachChatButtons();
 }
+
+// Pre-load places data for chat buttons (runs on page load, before map is opened)
+let _placesReady = false;
+async function _preloadPlaces() {
+  if (_placesReady) return;
+  try {
+    const res = await fetch(API + '/static/places_geo.json');
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        // Merge without duplicating if mapPlaces already loaded
+        if (mapPlaces.length === 0) mapPlaces = data;
+        else {
+          const seen = new Set(mapPlaces.map(p => (p.name||'').toLowerCase()));
+          data.forEach(p => { if (!seen.has((p.name||'').toLowerCase())) mapPlaces.push(p); });
+        }
+      }
+    }
+  } catch {}
+  _placesReady = true;
+  _reattachChatButtons();
+}
+
+function _reattachChatButtons() {
+  if (typeof addButtonsToLastBot !== 'function') return;
+  // Re-run button detection on all bot messages in the DOM
+  let prevUserText = '';
+  document.querySelectorAll('#chatMessages .msg').forEach(msg => {
+    if (msg.classList.contains('msg-user')) {
+      const bubble = msg.querySelector('.msg-bubble');
+      prevUserText = bubble ? bubble.textContent.toLowerCase() : '';
+    } else if (msg.classList.contains('msg-bot')) {
+      const bubble = msg.querySelector('.msg-bubble');
+      if (bubble && !bubble.querySelector('.msg-map-btn')) {
+        addButtonsToLastBot(bubble.textContent || '', prevUserText);
+      }
+    }
+  });
+}
+
+// Load places data immediately on page load
+_preloadPlaces();
 
 function clearChatHistory() {
   chatHistory = [];
@@ -2094,14 +2165,14 @@ function clearChatHistory() {
 
 function addMsg(type, text, audioB64, lang) {
   hideWelcome();
-  // Save to history
-  chatHistory.push({ type, text, lang, time: Date.now() });
+  // Save to history — mark if audio was available
+  chatHistory.push({ type, text, lang, time: Date.now(), hasAudio: !!audioB64 });
   saveChatHistory();
 
   const wrap = document.createElement('div');
   wrap.className = `msg msg-${type}`;
   let html = '<div class="msg-bubble">';
-  if (type === 'bot' && lang) html = `<div class="msg-bubble"><div class="msg-lang">${lang}</div>`;
+  if (type === 'bot' && lang) html = `<div class="msg-bubble"><div class="msg-lang">${(LANG_NAMES[lang] || lang || '').toUpperCase()}</div>`;
   html += (text || '').replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   if (audioB64) {
     const id = 'p' + Date.now();
@@ -2298,7 +2369,7 @@ async function sendText() {
   try {
     const res = await fetch(API + '/api/v1/query', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: text, language: selectedLang === 'auto' ? 'en' : selectedLang }),
+      body: JSON.stringify({ query: text, language: selectedLang }),
     });
     const data = await res.json();
     setProcessing(false);
@@ -2341,7 +2412,7 @@ async function sendVoice(blob) {
   setProcessing(true);
   const form = new FormData();
   form.append('audio', blob, 'recording.webm');
-  if (selectedLang !== 'auto') form.append('language', selectedLang);
+  form.append('language', selectedLang);
   try {
     const res = await fetch(API + '/api/v1/voice/input', { method: 'POST', body: form });
     const data = await res.json();
@@ -2368,6 +2439,39 @@ function autoPlay(b64) {
   if (currentAudio) currentAudio.pause();
   const a = new Audio('data:audio/mp3;base64,' + b64);
   currentAudio = a; a.play().catch(() => {});
+}
+
+// Fetch TTS on-demand for restored messages (no base64 stored)
+async function fetchAndPlay(btnId, lang) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  // Get the text from the same bubble
+  const bubble = btn.closest('.msg-bubble');
+  if (!bubble) return;
+  // Extract text (strip lang label and button itself)
+  const clone = bubble.cloneNode(true);
+  clone.querySelectorAll('.msg-lang, .msg-play, .msg-map-btn, button').forEach(el => el.remove());
+  const text = clone.textContent.trim();
+  if (!text) return;
+
+  btn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Loading...';
+  btn.disabled = true;
+  try {
+    const res = await fetch(API + '/api/v1/voice/tts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, language: lang || 'hi' }),
+    });
+    if (!res.ok) throw new Error('TTS failed');
+    const buf = await res.arrayBuffer();
+    const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ri-volume-up-fill"></i> Play';
+    btn.onclick = () => playB64(btnId, b64);
+    playB64(btnId, b64);
+  } catch {
+    btn.innerHTML = '<i class="ri-volume-up-fill"></i> Play';
+    btn.disabled = false;
+  }
 }
 
 // ═══ EMERGENCY ═══
@@ -2910,13 +3014,17 @@ const savedUILang = localStorage.getItem('yatri_ui_lang') || (currentUser && cur
 if (savedUILang && savedUILang !== 'en') setUILanguage(savedUILang);
 </script>
 
-<!-- Leaflet + Routing -->
+<!-- Leaflet + Routing + Clustering -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
 // ═══ MAP MODULE ═══
 let map = null, mapMarkers = [], mapPlaces = [], activeMapFilter = 'all';
 let selectedPlace = null, routeControl = null, userMarker = null, userLatLng = null;
+let markerCluster = null, travelMode = localStorage.getItem('yatri_travel_mode') || 'driving', locationWatchId = null, accuracyCircle = null;
 
 const MAP_CATS = [
   { key: 'all', label: 'All', icon: 'ri-star-line' },
@@ -2958,13 +3066,30 @@ function initMap() {
     zoomControl: false,
   });
 
-  // Beautiful map tiles
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-    maxZoom: 19,
+  // CartoDB Voyager — clean, modern map tiles (free)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://osm.org/copyright">OSM</a>',
+    maxZoom: 20, subdomains: 'abcd',
   }).addTo(map);
 
   L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+  // Init marker cluster group
+  markerCluster = L.markerClusterGroup({
+    maxClusterRadius: 50,
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    iconCreateFunction: function(cluster) {
+      const count = cluster.getChildCount();
+      const size = count < 10 ? 36 : count < 50 ? 42 : 50;
+      return L.divIcon({
+        html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:var(--saffron);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;box-shadow:0 2px 10px rgba(232,101,43,0.4);border:3px solid white">${count}</div>`,
+        className: '', iconSize: [size, size],
+      });
+    },
+  });
+  map.addLayer(markerCluster);
 
   // Render filter chips
   document.getElementById('mapFilters').innerHTML = MAP_CATS.map(c =>
@@ -3029,31 +3154,35 @@ async function loadMapPlaces() {
 
 function addMapMarkers() {
   // Clear existing
-  mapMarkers.forEach(m => map.removeLayer(m));
+  if (markerCluster) markerCluster.clearLayers();
+  mapMarkers.forEach(m => { try { map.removeLayer(m); } catch(e){} });
   mapMarkers = [];
 
   const filtered = activeMapFilter === 'all' ? mapPlaces :
     mapPlaces.filter(p => normCat(p.category) === activeMapFilter);
 
+  const markers = [];
   filtered.forEach(place => {
     const lat = place.lat || (place.coordinates && place.coordinates.lat);
     const lon = place.lon || place.lng || (place.coordinates && (place.coordinates.lon || place.coordinates.lng));
     if (!lat || !lon) return;
 
-    const marker = L.marker([lat, lon], { icon: createMarkerIcon(place.category || '') })
-      .addTo(map);
-
+    const marker = L.marker([lat, lon], { icon: createMarkerIcon(place.category || '') });
     marker.on('click', () => showMapCard(place, lat, lon));
-
-    // Simple popup on hover
     marker.bindTooltip(place.name || place.name_en || 'Unknown', {
-      direction: 'top', offset: [0, -36],
-      className: 'leaflet-tooltip',
+      direction: 'top', offset: [0, -20], className: 'leaflet-tooltip',
     });
-
     marker._placeData = place;
+    markers.push(marker);
     mapMarkers.push(marker);
   });
+
+  // Add to cluster group (auto clusters on zoom out)
+  if (markerCluster) {
+    markerCluster.addLayers(markers);
+  } else {
+    markers.forEach(m => m.addTo(map));
+  }
 }
 
 function showMapCard(place, lat, lon) {
@@ -3065,7 +3194,20 @@ function showMapCard(place, lat, lon) {
   let meta = '';
   if (place.timings) meta += `<span><i class="ri-time-line"></i> ${place.timings}</span>`;
   if (place.entry_fee) meta += `<span><i class="ri-ticket-line"></i> ${place.entry_fee}</span>`;
-  meta += `<span><i class="ri-map-pin-line"></i> ${lat.toFixed(4)}, ${lon.toFixed(4)}</span>`;
+  if (place.rating) meta += `<span><i class="ri-star-fill" style="color:#F59E0B"></i> ${place.rating}</span>`;
+
+  // Distance from user
+  if (userLatLng) {
+    const dist = userLatLng.distanceTo(L.latLng(lat, lon));
+    const km = (dist / 1000).toFixed(1);
+    const walkMin = Math.round(dist / 80);  // ~80m/min walking
+    const driveMin = Math.max(1, Math.round(dist / 500));  // ~30km/h city
+    meta += `<span><i class="ri-pin-distance-line"></i> ${km} km</span>`;
+    meta += `<span><i class="ri-walk-line"></i> ~${walkMin} min</span>`;
+    meta += `<span><i class="ri-car-line"></i> ~${driveMin} min</span>`;
+  } else {
+    meta += `<span><i class="ri-map-pin-line"></i> ${lat.toFixed(4)}, ${lon.toFixed(4)}</span>`;
+  }
   document.getElementById('mpcMeta').innerHTML = meta;
 
   document.getElementById('mapPlaceCard').classList.add('show');
@@ -3111,14 +3253,17 @@ function drawRoute(from, to) {
   document.getElementById('mapPlaceCard').classList.remove('show');
 
   try {
+    const profile = travelMode === 'walking' ? 'foot' : 'driving';
+    const lineColor = travelMode === 'walking' ? '#059669' : '#E8652B';
+
     routeControl = L.Routing.control({
       waypoints: [from, to],
       router: L.Routing.osrmv1({
         serviceUrl: 'https://router.project-osrm.org/route/v1',
-        profile: 'driving',
+        profile: profile,
       }),
       lineOptions: {
-        styles: [{ color: '#E8652B', weight: 5, opacity: 0.8 }],
+        styles: [{ color: lineColor, weight: 5, opacity: 0.8 }],
         addWaypoints: false,
       },
       show: true,
@@ -3130,7 +3275,7 @@ function drawRoute(from, to) {
         const isStart = i === 0;
         return L.circleMarker(wp.latLng, {
           radius: isStart ? 8 : 10,
-          fillColor: isStart ? '#4285F4' : '#E8652B',
+          fillColor: isStart ? '#4285F4' : lineColor,
           fillOpacity: 1, color: 'white', weight: 3,
         }).bindTooltip(isStart ? 'Start' : 'Destination');
       },
@@ -3152,8 +3297,13 @@ function drawRoute(from, to) {
           </div>`
         ).join('') : '';
 
+      const modeIcon = travelMode === 'walking' ? 'ri-walk-line' : 'ri-car-line';
+      const modeLabel = travelMode === 'walking' ? 'Walking' : 'Driving';
       document.getElementById('routeInfo').innerHTML = `
-        <div style="display:flex;gap:16px;margin-bottom:${stepsHtml ? '10px' : '0'}">
+        <div style="display:flex;gap:16px;align-items:center;margin-bottom:${stepsHtml ? '10px' : '0'}">
+          <div style="display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;background:${travelMode==='walking'?'rgba(5,150,105,0.1)':'rgba(232,101,43,0.1)'};font-size:12px;font-weight:600;color:${travelMode==='walking'?'#059669':'#C44B1A'}">
+            <i class="${modeIcon}"></i> ${modeLabel}
+          </div>
           <div><div class="ri-label">Distance</div><div class="ri-value">${km} km</div></div>
           <div><div class="ri-label">Est. Time</div><div class="ri-value">~${mins} min</div></div>
         </div>
@@ -3189,24 +3339,75 @@ function drawRoute(from, to) {
 function locateMe() {
   const btn = document.getElementById('mapLocateBtn');
   btn.classList.add('active');
+
+  // Stop existing watch
+  if (locationWatchId) { navigator.geolocation.clearWatch(locationWatchId); locationWatchId = null; }
+
+  function updateUserPos(pos) {
+    userLatLng = L.latLng(pos.coords.latitude, pos.coords.longitude);
+
+    // Blue dot marker
+    if (userMarker) map.removeLayer(userMarker);
+    userMarker = L.circleMarker(userLatLng, {
+      radius: 9, fillColor: '#4285F4', fillOpacity: 1,
+      color: 'white', weight: 3,
+    }).addTo(map).bindTooltip('You are here');
+
+    // Accuracy circle (blue halo)
+    if (accuracyCircle) map.removeLayer(accuracyCircle);
+    const acc = pos.coords.accuracy || 50;
+    if (acc < 500) {
+      accuracyCircle = L.circle(userLatLng, {
+        radius: acc, color: '#4285F4', fillColor: '#4285F4',
+        fillOpacity: 0.08, weight: 1, opacity: 0.3,
+      }).addTo(map);
+    }
+
+    btn.classList.remove('active');
+  }
+
   navigator.geolocation.getCurrentPosition(
     pos => {
-      userLatLng = L.latLng(pos.coords.latitude, pos.coords.longitude);
-      if (userMarker) map.removeLayer(userMarker);
-      userMarker = L.circleMarker(userLatLng, {
-        radius: 8, fillColor: '#4285F4', fillOpacity: 1,
-        color: 'white', weight: 3,
-      }).addTo(map).bindTooltip('You are here').openTooltip();
+      updateUserPos(pos);
       map.setView(userLatLng, 15, { animate: true });
-      btn.classList.remove('active');
+
+      // Start watching for live updates
+      locationWatchId = navigator.geolocation.watchPosition(updateUserPos, () => {}, {
+        enableHighAccuracy: true, maximumAge: 10000, timeout: 15000,
+      });
     },
     () => {
-      alert('Location access denied. Please set location manually using the pin button.');
+      alert('Location access denied. Use the pin button to set manually.');
       map.setView([19.9975, 73.7898], 13, { animate: true });
       btn.classList.remove('active');
-    }
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
   );
 }
+
+// Travel mode toggle
+function setTravelMode(mode) {
+  travelMode = mode;
+  localStorage.setItem('yatri_travel_mode', mode);
+  document.querySelectorAll('.travel-mode-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`.travel-mode-btn[data-mode="${mode}"]`);
+  if (btn) btn.classList.add('active');
+  // Re-route if active
+  if (routeFrom && routeTo) executeRoute();
+}
+
+// Restore travel mode on load
+(function restoreTravelMode() {
+  const saved = localStorage.getItem('yatri_travel_mode');
+  if (saved) {
+    travelMode = saved;
+    setTimeout(() => {
+      document.querySelectorAll('.travel-mode-btn').forEach(b => b.classList.remove('active'));
+      const btn = document.querySelector(`.travel-mode-btn[data-mode="${saved}"]`);
+      if (btn) btn.classList.add('active');
+    }, 500);
+  }
+})();
 
 function toggleMapFilters() {
   document.getElementById('mapFilters').classList.toggle('open');
@@ -3670,12 +3871,48 @@ function addButtonsToLastBot(botText, userQuestion) {
   const combinedText = textLower + ' ' + lastUserQ;
   const mentioned = [];
   const seenNames = new Set();
+
+  // Common aliases / short names for places
+  const ALIASES = {
+    'trimbakeshwar': ['trimbak','trambak','trimbk','त्र्यंबकेश्वर','त्रिंबकेश्वर','त्र्यंबक','त्रिंबक'],
+    'ramkund': ['ram kund','रामकुंड','राम कुंड'],
+    'kalaram temple': ['kalaram','kalaram mandir','काळाराम','कालाराम'],
+    'panchavati': ['panchvati','पंचवटी'],
+    'tapovan': ['तपोवन','tapovana'],
+    'saptashrungi devi': ['saptashrungi','saptashringi','साप्तश्रृंगी'],
+    'sula vineyards': ['sula','सुला'],
+    'nashik road railway': ['nashik road station','nashik station','नाशिक रोड'],
+    'cbs bus stand': ['cbs','cbs nashik','सीबीएस'],
+    'nashik ozar airport': ['ozar airport','ozar','ओझर'],
+    'pandav leni caves': ['pandav leni','pandavleni','पांडवलेणी'],
+    'anjaneri hill': ['anjaneri','अंजनेरी'],
+    'gangapur dam': ['gangapur','गंगापूर'],
+    'someshwar waterfall': ['someshwar','सोमेश्वर'],
+    'muktidham': ['muktidham temple','मुक्तिधाम'],
+    'harihar fort': ['harihar','हरिहर'],
+  };
+
   allP.forEach(p => {
     const pname = (p.name || p.name_en || '').toLowerCase();
     const pnameHi = (p.name_hi || '').toLowerCase();
     if (seenNames.has(pname)) return;
-    const matched = (pname.length > 3 && combinedText.includes(pname)) ||
-                    (pnameHi.length > 3 && combinedText.includes(pnameHi));
+
+    // Direct substring match
+    let matched = (pname.length > 3 && combinedText.includes(pname)) ||
+                  (pnameHi.length > 3 && combinedText.includes(pnameHi));
+
+    // Alias match
+    if (!matched) {
+      const aliases = ALIASES[pname] || [];
+      matched = aliases.some(a => combinedText.includes(a.toLowerCase()));
+    }
+
+    // Partial word match — if any word in place name (4+ chars) appears in text
+    if (!matched) {
+      const words = pname.split(/[\s\-]+/).filter(w => w.length >= 4);
+      matched = words.some(w => combinedText.includes(w));
+    }
+
     if (matched) {
       const coords = getPlaceLatLon(p);
       if (coords) { mentioned.push({ ...p, ...coords }); seenNames.add(pname); }
@@ -3718,10 +3955,21 @@ function addButtonsToLastBot(botText, userQuestion) {
   }
   if (isDir && !toPlace && mentioned.length > 0) toPlace = mentioned[mentioned.length > 1 ? 1 : 0];
 
+  // Always detect direction intent — even if no explicit pattern, suggest directions for any mentioned place
+  if (!isDir && mentioned.length > 0) {
+    const dirWords = ['how to go','how to reach','kaise jaaye','kaise jaye','kaise pahunche','pahunchne','jane ka','jaane','travel','transport',
+                      'कैसे पहुंचे','कैसे जाएं','कैसे जाये','जाना है','पहुंचना','कसे जायचे','कसे पोहोचायचे','जायचे आहे'];
+    if (dirWords.some(w => lastUserQ.includes(w))) {
+      isDir = true;
+      toPlace = mentioned[mentioned.length > 1 ? 1 : 0];
+    }
+  }
+
   if (isDir && toPlace) {
     const dest = toPlace;
     const destCoords = getPlaceLatLon(dest);
     if (destCoords) {
+      // In-app route button
       const dirBtn = document.createElement('button');
       dirBtn.className = 'msg-map-btn';
       dirBtn.style.cssText = 'background:rgba(232,101,43,0.12);color:#C44B1A';
@@ -3729,7 +3977,62 @@ function addButtonsToLastBot(botText, userQuestion) {
       dirBtn.innerHTML = `<i class="ri-route-line"></i> ${fromLabel} → ${dest.name || dest.name_en}`;
       dirBtn.onclick = () => { navigate('map'); setTimeout(() => { initMap(); if (fromPlace) { const fc = getPlaceLatLon(fromPlace); if (fc) routeFrom = {name:fromPlace.name,lat:fc.lat,lon:fc.lon}; } else if (userLatLng) { routeFrom = {name:'My Location',lat:userLatLng.lat,lon:userLatLng.lng}; } routeTo = {name:dest.name||dest.name_en,lat:destCoords.lat,lon:destCoords.lon}; document.getElementById('routeFromInput').value = routeFrom?routeFrom.name:''; document.getElementById('routeToInput').value = routeTo.name; document.getElementById('routeToInput').classList.add('filled'); openRoutePanel(); if(routeFrom)executeRoute(); }, 200); };
       btnWrap.appendChild(dirBtn);
+
+      // "Get my location" button — auto-route from current position
+      const locBtn = document.createElement('button');
+      locBtn.className = 'msg-map-btn';
+      locBtn.style.cssText = 'background:rgba(5,150,105,0.12);color:#059669';
+      locBtn.innerHTML = '<i class="ri-focus-3-line"></i> Navigate from here';
+      locBtn.onclick = () => {
+        locBtn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Locating...';
+        navigator.geolocation.getCurrentPosition(pos => {
+          navigate('map');
+          setTimeout(() => {
+            initMap();
+            routeFrom = {name:'My Location', lat:pos.coords.latitude, lon:pos.coords.longitude};
+            routeTo = {name:dest.name||dest.name_en, lat:destCoords.lat, lon:destCoords.lon};
+            document.getElementById('routeFromInput').value = 'My Location';
+            document.getElementById('routeToInput').value = routeTo.name;
+            document.getElementById('routeToInput').classList.add('filled');
+            openRoutePanel();
+            executeRoute();
+          }, 200);
+        }, () => { locBtn.innerHTML = '<i class="ri-focus-3-line"></i> Location denied'; });
+      };
+      btnWrap.appendChild(locBtn);
     }
+  }
+
+  // For any mentioned place without direction intent — show on map + offer navigate
+  if (!isDir && mentioned.length > 0) {
+    mentioned.slice(0, 3).forEach(p => {
+      const coords = getPlaceLatLon(p);
+      if (!coords) return;
+      // "Navigate" button — opens route panel to this place
+      const navBtn = document.createElement('button');
+      navBtn.className = 'msg-map-btn';
+      navBtn.style.cssText = 'background:rgba(232,101,43,0.12);color:#C44B1A';
+      navBtn.innerHTML = `<i class="ri-route-line"></i> Navigate to ${p.name || p.name_en}`;
+      navBtn.onclick = () => {
+        navigate('map');
+        setTimeout(() => {
+          initMap();
+          map.setView([coords.lat, coords.lon], 16);
+          showMapCard(p, coords.lat, coords.lon);
+          routeTo = {name:p.name||p.name_en, lat:coords.lat, lon:coords.lon};
+          document.getElementById('routeToInput').value = routeTo.name;
+          document.getElementById('routeToInput').classList.add('filled');
+          openRoutePanel();
+          // Auto-route if we have user location
+          if (userLatLng) {
+            routeFrom = {name:'My Location', lat:userLatLng.lat, lon:userLatLng.lng};
+            document.getElementById('routeFromInput').value = 'My Location';
+            executeRoute();
+          }
+        }, 200);
+      };
+      btnWrap.appendChild(navBtn);
+    });
   }
 
   _addEmergencyButtons(btnWrap, lastUserQ, textLower);

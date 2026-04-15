@@ -39,3 +39,5 @@ numpy==1.26.4
 tqdm==4.67.0
 huggingface_hub
 hf_transfer
+python-dotenv==1.0.1
+edge-tts>=7.0.0

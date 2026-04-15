@@ -1,17 +1,36 @@
-"""TTS service — AI4Bharat TTS for Indian languages, fallback to gTTS."""
+"""TTS service — edge-tts (Microsoft Edge voices) for high-quality Indian language speech."""
 
+import asyncio
 import io
 import logging
 import re
+import tempfile
 from functools import lru_cache
+from pathlib import Path
 from typing import Optional
 
 log = logging.getLogger(__name__)
 
-# Map language codes to gTTS/Coqui language tags
+# High-quality Microsoft Edge voices for Indian languages
+EDGE_VOICES = {
+    "en": "en-IN-NeerjaExpressiveNeural",   # Indian English female
+    "hi": "hi-IN-SwaraNeural",               # Hindi female
+    "mr": "mr-IN-AarohiNeural",              # Marathi female
+    "gu": "gu-IN-DhwaniNeural",              # Gujarati female
+    "ta": "ta-IN-PallaviNeural",             # Tamil female
+    "te": "te-IN-ShrutiNeural",              # Telugu female
+    "kn": "kn-IN-SapnaNeural",              # Kannada female
+    "ml": "ml-IN-SobhanaNeural",            # Malayalam female
+    "bn": "bn-IN-TanishaaNeural",           # Bengali female
+    "pa": "hi-IN-SwaraNeural",              # Punjabi → Hindi voice (closest)
+    "ur": "ur-IN-GulNeural",                # Urdu female
+}
+
+# Fallback gTTS language map
 GTTS_LANG_MAP = {
     "en": "en", "hi": "hi", "mr": "mr", "gu": "gu",
     "ta": "ta", "te": "te", "kn": "kn", "ml": "ml",
+    "bn": "bn", "pa": "hi", "ur": "hi",
 }
 
 # Sentence split regex — handles Devanagari, Tamil, Telugu, etc.
@@ -34,10 +53,39 @@ def split_sentences(text: str, max_chars: int = 500) -> list[str]:
     return chunks or [text]
 
 
+def _run_async(coro):
+    """Run an async function from sync context."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        # We're inside an async context (FastAPI) — run in a new thread
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            future = pool.submit(asyncio.run, coro)
+            return future.result(timeout=30)
+    else:
+        return asyncio.run(coro)
+
+
 class TTSService:
     def __init__(self):
-        self._indic_tts = None
+        self._edge_available = self._check_edge_tts()
         self._gtts_available = self._check_gtts()
+        if self._edge_available:
+            log.info("TTS backend: edge-tts (Microsoft Neural voices)")
+        elif self._gtts_available:
+            log.info("TTS backend: gTTS (Google fallback)")
+
+    def _check_edge_tts(self) -> bool:
+        try:
+            import edge_tts  # noqa
+            return True
+        except ImportError:
+            log.warning("edge-tts not installed")
+            return False
 
     def _check_gtts(self) -> bool:
         try:
@@ -47,56 +95,45 @@ class TTSService:
             log.warning("gTTS not installed — TTS will be limited")
             return False
 
-    def _try_load_indic_tts(self):
-        """Lazy-load AI4Bharat IndicTTS (Coqui backend)."""
-        if self._indic_tts is not None:
-            return self._indic_tts
+    async def _edge_synthesize(self, text: str, language: str) -> bytes:
+        """Synthesize using edge-tts (async)."""
+        import edge_tts
 
-        try:
-            from TTS.api import TTS as CoquiTTS
-            # ai4bharat/indic-tts supports: hi, mr, gu, ta, te, kn, ml
-            tts = CoquiTTS("tts_models/multilingual/multi-dataset/xtts_v2")
-            self._indic_tts = tts
-            log.info("IndicTTS (Coqui XTTS v2) loaded")
-            return tts
-        except Exception as e:
-            log.warning(f"Could not load IndicTTS: {e}. Will use gTTS fallback.")
-            return None
+        voice = EDGE_VOICES.get(language, EDGE_VOICES["hi"])
+        communicate = edge_tts.Communicate(text, voice)
+
+        audio_chunks = []
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_chunks.append(chunk["data"])
+
+        return b"".join(audio_chunks)
+
+    def _gtts_synthesize(self, text: str, language: str) -> bytes:
+        """Fallback: gTTS synthesis."""
+        from gtts import gTTS
+        lang_code = GTTS_LANG_MAP.get(language, "hi")
+        tts_obj = gTTS(text=text, lang=lang_code, slow=False)
+        mp3_buf = io.BytesIO()
+        tts_obj.write_to_fp(mp3_buf)
+        mp3_buf.seek(0)
+        return mp3_buf.read()
 
     @lru_cache(maxsize=200)
     def _synthesize_cached(self, text: str, language: str) -> bytes:
         return self._synthesize_uncached(text, language)
 
     def _synthesize_uncached(self, text: str, language: str) -> bytes:
-        # Try Coqui XTTS v2 (higher quality)
-        tts = self._try_load_indic_tts()
-        if tts:
+        # Try edge-tts first (high quality neural voices)
+        if self._edge_available:
             try:
-                import tempfile, os
-                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
-                    tmp_path = f.name
-                tts.tts_to_file(
-                    text=text,
-                    language=GTTS_LANG_MAP.get(language, "hi"),
-                    file_path=tmp_path,
-                )
-                with open(tmp_path, "rb") as f:
-                    audio = f.read()
-                os.unlink(tmp_path)
-                return audio
+                return _run_async(self._edge_synthesize(text, language))
             except Exception as e:
-                log.warning(f"Coqui TTS failed: {e}. Falling back to gTTS.")
+                log.warning(f"edge-tts failed: {e}. Falling back to gTTS.")
 
         # gTTS fallback
         if self._gtts_available:
-            from gtts import gTTS
-
-            lang_code = GTTS_LANG_MAP.get(language, "hi")
-            tts_obj = gTTS(text=text, lang=lang_code, slow=False)
-            mp3_buf = io.BytesIO()
-            tts_obj.write_to_fp(mp3_buf)
-            mp3_buf.seek(0)
-            return mp3_buf.read()
+            return self._gtts_synthesize(text, language)
 
         raise RuntimeError("No TTS backend available")
 
