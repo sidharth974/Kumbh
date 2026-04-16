@@ -2894,25 +2894,50 @@ async function handleRegister() {
 
 // ═══ GOOGLE SIGN-IN ═══
 const GOOGLE_CLIENT_ID = '562145323688-83v8t439rdcrqfetn88krsbpqff5ihr8.apps.googleusercontent.com';
+let _googleInitialized = false;
 
-function googleSignIn() {
-  if (typeof google === 'undefined' || !google.accounts) {
-    showToast('Google Sign-In loading... try again in a moment');
-    return;
-  }
+function _initGoogle() {
+  if (_googleInitialized || typeof google === 'undefined' || !google.accounts) return false;
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
     callback: handleGoogleResponse,
+    auto_select: false,
+    cancel_on_tap_outside: true,
   });
+  _googleInitialized = true;
+  return true;
+}
+
+// Auto-init when Google script loads
+window.addEventListener('load', () => setTimeout(_initGoogle, 1000));
+
+function googleSignIn() {
+  if (!_initGoogle() && !_googleInitialized) {
+    showToast('Google Sign-In is loading... please try again');
+    return;
+  }
+  // Use prompt (One Tap) — works on most browsers
   google.accounts.id.prompt((notification) => {
     if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-      // Fallback: show the one-tap UI manually
-      google.accounts.id.renderButton(
-        document.createElement('div'),
-        { theme: 'outline', size: 'large' }
-      );
-      // Try popup mode
-      google.accounts.id.prompt();
+      // Fallback: render a hidden button and click it programmatically
+      let container = document.getElementById('_gsi_container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = '_gsi_container';
+        container.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999';
+        document.body.appendChild(container);
+      }
+      container.innerHTML = '';
+      google.accounts.id.renderButton(container, {
+        theme: 'outline', size: 'large', width: 300, text: 'continue_with',
+      });
+      // Auto-click after render
+      setTimeout(() => {
+        const btn = container.querySelector('[role="button"]') || container.querySelector('div[style]');
+        if (btn) btn.click();
+      }, 200);
+      // Clean up after 30s
+      setTimeout(() => { if (container) container.remove(); }, 30000);
     }
   });
 }
