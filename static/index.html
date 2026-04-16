@@ -4230,9 +4230,9 @@ renderPlaces = function() {
 })();
 
 // Show skeleton when loading explore
-const _origNavigate = navigate;
+const _navForSkeleton = navigate;
 navigate = function(page) {
-  _origNavigate(page);
+  _navForSkeleton(page);
   if (page === 'explore' && document.querySelectorAll('.place-card').length === 0) {
     showPlaceSkeleton();
   }
