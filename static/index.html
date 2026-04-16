@@ -1430,6 +1430,75 @@ body {
   .navbar, .mobile-nav, .chat-input-bar, .btn-mic { display: none !important; }
   .page { display: block !important; }
 }
+
+/* ═══ PWA INSTALL BANNER ═══ */
+.pwa-banner {
+  position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%) translateY(120%);
+  z-index: 9999; width: calc(100% - 32px); max-width: 400px;
+  background: linear-gradient(135deg, var(--maroon), var(--saffron-dark));
+  color: white; border-radius: 16px; padding: 16px 20px;
+  display: flex; align-items: center; gap: 14px;
+  box-shadow: 0 8px 32px rgba(107,15,26,0.3);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.pwa-banner.show { transform: translateX(-50%) translateY(0); }
+.pwa-banner-icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.pwa-banner-text { flex: 1; }
+.pwa-banner-text h4 { font-size: 14px; font-weight: 700; margin: 0; }
+.pwa-banner-text p { font-size: 11px; opacity: 0.8; margin: 2px 0 0; }
+.pwa-banner-btn { padding: 8px 16px; border-radius: 10px; background: white; color: var(--maroon); font-weight: 700; font-size: 12px; border: none; cursor: pointer; font-family: inherit; white-space: nowrap; }
+.pwa-banner-close { position: absolute; top: 6px; right: 8px; background: none; border: none; color: rgba(255,255,255,0.6); font-size: 16px; cursor: pointer; }
+
+/* ═══ PAGE TRANSITIONS ═══ */
+.page { opacity: 0; transform: translateY(8px); transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; }
+.page.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+
+/* ═══ SKELETON LOADING ═══ */
+.skeleton { background: linear-gradient(90deg, #f0ece6 25%, #e8e3dc 50%, #f0ece6 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.5s ease-in-out infinite; border-radius: 8px; }
+@keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skeleton-card { height: 220px; border-radius: 24px; margin-bottom: 12px; }
+
+/* ═══ PLACE CARD IMAGE ENHANCEMENT ═══ */
+.place-card-img {
+  width: 100%; height: 160px; object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.place-card:hover .place-card-img { transform: scale(1.05); }
+.place-card-img-wrap {
+  position: relative; height: 160px; overflow: hidden; border-radius: 24px 24px 0 0;
+  background: linear-gradient(135deg, #f5f0ea, #ebe5de);
+}
+.place-card-img-wrap::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 60px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.3));
+  pointer-events: none;
+}
+
+/* ═══ SMOOTH SCROLL SNAP FOR MOBILE ═══ */
+@media (max-width: 768px) {
+  .filter-bar, .map-filters { scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+  .filter-chip, .map-filter-chip { scroll-snap-align: start; }
+
+  /* Better touch feedback */
+  .place-card:active { transform: scale(0.97); transition: transform 0.1s; }
+  button:active, .nav-link:active, .mobile-nav button:active { transform: scale(0.95); transition: transform 0.1s; }
+  .msg-map-btn:active, .msg-play:active { transform: scale(0.93); }
+
+  /* Smoother bottom nav */
+  .mobile-nav { transition: transform 0.3s ease; }
+  .mobile-nav.hidden { transform: translateY(100%); }
+}
+
+/* ═══ MESSAGE ANIMATIONS ═══ */
+.msg { animation: msgSlideIn 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+.msg-user { animation-name: msgSlideRight; }
+.msg-bot { animation-name: msgSlideLeft; }
+@keyframes msgSlideRight { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes msgSlideLeft { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ═══ STAGGER ANIMATION FOR CARDS ═══ */
+.place-card { animation: cardFadeUp 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
+@keyframes cardFadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
@@ -2577,7 +2646,34 @@ const IMG_KEYWORDS = {
   emergency: ['hospital+india', 'ambulance', 'police+india'],
   market: ['indian+market+bazaar', 'street+market+india', 'shopping+india'],
 };
+// Curated image URLs for major Nashik places (Wikimedia Commons, royalty-free)
+const PLACE_IMAGES = {
+  'ramkund': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Ramkund1.jpg/640px-Ramkund1.jpg',
+  'kalaram temple': 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Kalaram_Temple%2C_Panchavati%2C_Nashik.jpg/640px-Kalaram_Temple%2C_Panchavati%2C_Nashik.jpg',
+  'trimbakeshwar': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/Trimbakeshwar_Shiva_Temple%2C_Trimbak.jpg/640px-Trimbakeshwar_Shiva_Temple%2C_Trimbak.jpg',
+  'saptashrungi devi': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Saptashrungi_temple.JPG/640px-Saptashrungi_temple.JPG',
+  'pandav leni caves': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/PandavLeni_004.jpg/640px-PandavLeni_004.jpg',
+  'sula vineyards': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Sula_Vineyards_-_panoramio.jpg/640px-Sula_Vineyards_-_panoramio.jpg',
+  'tapovan': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Nashik_Tapovan.jpg/640px-Nashik_Tapovan.jpg',
+  'muktidham': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Muktidham_Temple_Nashik.jpg/640px-Muktidham_Temple_Nashik.jpg',
+  'gangapur dam': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Gangapur_Dam_Nashik.jpg/640px-Gangapur_Dam_Nashik.jpg',
+  'anjaneri hill': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Anjaneri.jpg/640px-Anjaneri.jpg',
+  'panchavati': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Sita_Gufa_Panchavati_Nashik.jpg/640px-Sita_Gufa_Panchavati_Nashik.jpg',
+  'harihar fort': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Harihar_fort_steps.jpg/640px-Harihar_fort_steps.jpg',
+  'coin museum': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Indian_Museum_Coin_Gallery.jpg/640px-Indian_Museum_Coin_Gallery.jpg',
+};
+
 function getPlaceImage(p) {
+  // Use image from data (places_geo.json now has images for all 178 places)
+  if (p.image) return p.image;
+  if (p.image_url) return p.image_url;
+  // Check curated JS mapping
+  const name = (p.name || p.name_en || '').toLowerCase();
+  if (PLACE_IMAGES[name]) return PLACE_IMAGES[name];
+  for (const [key, url] of Object.entries(PLACE_IMAGES)) {
+    if (name.includes(key) || key.includes(name)) return url;
+  }
+  // Fallback to category-based Unsplash
   const cat = normCat(p.category);
   const kws = IMG_KEYWORDS[cat] || ['nashik+india'];
   const kw = kws[Math.abs(hashStr(p.name || '')) % kws.length];
@@ -2611,23 +2707,24 @@ function renderPlaces() {
     const lat = p.lat || (p.coordinates && p.coordinates.lat);
     const lon = p.lon || p.lng || (p.coordinates && (p.coordinates.lon || p.coordinates.lng));
 
-    return `<div class="place-card" onclick="this.querySelector('.place-detail').classList.toggle('open')">
-      <div style="position:relative;height:140px;overflow:hidden;background:linear-gradient(135deg,${color}15,${color}08)">
-        <img src="${img}" alt="${name}" style="width:100%;height:100%;object-fit:cover" loading="lazy" onerror="this.style.display='none'">
-        <div style="position:absolute;top:8px;left:8px;display:flex;gap:4px">
-          <span style="background:${color};color:white;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600;display:flex;align-items:center;gap:3px">
+    return `<div class="place-card" style="animation-delay:${i * 0.06}s" onclick="this.querySelector('.place-detail').classList.toggle('open')">
+      <div class="place-card-img-wrap">
+        <img src="${img}" alt="${name}" class="place-card-img" loading="lazy" onerror="this.style.display='none'">
+        <div style="position:absolute;top:10px;left:10px;display:flex;gap:4px;z-index:2">
+          <span style="background:${color};color:white;padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;display:flex;align-items:center;gap:4px;backdrop-filter:blur(4px)">
             <i class="${icon}" style="font-size:11px"></i> ${p.category || 'Place'}
           </span>
         </div>
-        ${p.entry_fee ? `<span style="position:absolute;top:8px;right:8px;background:white;color:var(--ink);padding:3px 10px;border-radius:20px;font-size:10px;font-weight:600">${p.entry_fee}</span>` : ''}
+        ${p.entry_fee ? `<span style="position:absolute;top:10px;right:10px;background:rgba(255,255,255,0.95);color:var(--ink);padding:4px 12px;border-radius:20px;font-size:10px;font-weight:700;z-index:2;backdrop-filter:blur(4px)">${p.entry_fee}</span>` : ''}
+        <div style="position:absolute;bottom:10px;left:10px;z-index:2">
+          <h3 style="font-size:16px;font-weight:800;color:white;text-shadow:0 1px 4px rgba(0,0,0,0.5);margin:0">${name}</h3>
+          ${nameHi ? `<span style="font-size:11px;color:rgba(255,255,255,0.85);text-shadow:0 1px 2px rgba(0,0,0,0.5)">${nameHi}</span>` : ''}
+        </div>
       </div>
       <div style="padding:12px 14px">
-        <div style="display:flex;justify-content:space-between;align-items:start">
-          <div>
-            <h3 style="font-size:15px;font-weight:700;color:var(--ink)">${name}</h3>
-            ${nameHi ? `<span style="font-size:12px;color:var(--ink-muted)">${nameHi}</span>` : ''}
-          </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
           ${renderStars(rating)}
+          ${userLatLng && lat && lon ? `<span style="font-size:11px;color:var(--ink-muted);display:flex;align-items:center;gap:3px"><i class="ri-pin-distance-line"></i> ${(userLatLng.distanceTo(L.latLng(lat,lon))/1000).toFixed(1)} km</span>` : ''}
         </div>
         <p style="font-size:12px;color:var(--ink-light);margin-top:6px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${desc}</p>
         <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;font-size:11px;color:var(--ink-muted)">
@@ -4109,6 +4206,95 @@ navigate = function(page) {
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/static/sw.js').catch(() => {});
 }
+
+// ═══ PWA INSTALL PROMPT ═══
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install banner after 3 seconds
+  if (!localStorage.getItem('yatri_pwa_dismissed')) {
+    setTimeout(() => {
+      document.getElementById('pwaBanner').classList.add('show');
+    }, 3000);
+  }
+});
+
+function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(result => {
+    if (result.outcome === 'accepted') {
+      document.getElementById('pwaBanner').classList.remove('show');
+    }
+    deferredPrompt = null;
+  });
+}
+
+function dismissPWA() {
+  document.getElementById('pwaBanner').classList.remove('show');
+  localStorage.setItem('yatri_pwa_dismissed', '1');
+}
+
+// ═══ SKELETON LOADING FOR PLACES ═══
+function showPlaceSkeleton() {
+  const list = document.getElementById('placesList');
+  if (!list) return;
+  list.innerHTML = Array(6).fill('').map(() =>
+    '<div class="skeleton skeleton-card"></div>'
+  ).join('');
+}
+
+// ═══ STAGGER ANIMATION FOR PLACE CARDS ═══
+const _origRenderPlaces = renderPlaces;
+renderPlaces = function() {
+  _origRenderPlaces();
+  // Add stagger delay to each card
+  document.querySelectorAll('.place-card').forEach((card, i) => {
+    card.style.animationDelay = `${i * 0.06}s`;
+  });
+};
+
+// ═══ HIDE BOTTOM NAV ON SCROLL DOWN, SHOW ON SCROLL UP ═══
+(function() {
+  let lastScroll = 0;
+  const nav = document.querySelector('.mobile-nav');
+  if (!nav) return;
+  const pages = document.querySelectorAll('.page');
+  pages.forEach(page => {
+    const scrollable = page.querySelector('.chat-messages, .places-list') || page;
+    scrollable.addEventListener('scroll', function() {
+      const curr = this.scrollTop;
+      if (curr > lastScroll && curr > 80) {
+        nav.classList.add('hidden');
+      } else {
+        nav.classList.remove('hidden');
+      }
+      lastScroll = curr;
+    }, { passive: true });
+  });
+})();
+
+// Show skeleton when loading explore
+const _origNavigate = navigate;
+navigate = function(page) {
+  _origNavigate(page);
+  if (page === 'explore' && document.querySelectorAll('.place-card').length === 0) {
+    showPlaceSkeleton();
+  }
+};
 </script>
+
+<!-- PWA Install Banner -->
+<div class="pwa-banner" id="pwaBanner">
+  <button class="pwa-banner-close" onclick="dismissPWA()">&times;</button>
+  <div class="pwa-banner-icon"><i class="ri-download-2-line"></i></div>
+  <div class="pwa-banner-text">
+    <h4>Install Yatri AI</h4>
+    <p>Add to home screen for instant access</p>
+  </div>
+  <button class="pwa-banner-btn" onclick="installPWA()">Install</button>
+</div>
+
 </body>
 </html>

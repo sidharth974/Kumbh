@@ -1,12 +1,16 @@
 {
   "name": "Yatri AI — Nashik Kumbh Mela 2027",
   "short_name": "Yatri AI",
-  "description": "Multilingual AI voice assistant for Nashik Kumbh Mela 2027",
+  "description": "Multilingual AI voice assistant for Nashik Kumbh Mela 2027. Ask anything about Kumbh in 11 languages.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#6B0F1A",
+  "background_color": "#FFF8F0",
   "theme_color": "#6B0F1A",
+  "categories": ["travel", "navigation", "utilities"],
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/static/icon-192.png",
@@ -19,6 +23,26 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ask AI",
+      "short_name": "Chat",
+      "url": "/?page=chat",
+      "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]
+    },
+    {
+      "name": "Explore Nashik",
+      "short_name": "Explore",
+      "url": "/?page=explore",
+      "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]
+    },
+    {
+      "name": "Emergency SOS",
+      "short_name": "SOS",
+      "url": "/?page=emergency",
+      "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]
     }
   ]
 }
