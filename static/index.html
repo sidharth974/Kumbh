@@ -1450,8 +1450,7 @@ body {
 .pwa-banner-close { position: absolute; top: 6px; right: 8px; background: none; border: none; color: rgba(255,255,255,0.6); font-size: 16px; cursor: pointer; }
 
 /* ═══ PAGE TRANSITIONS ═══ */
-.page { opacity: 0; transform: translateY(8px); transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; }
-.page.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+.page.active { opacity: 1; transform: translateY(0); transition: opacity 0.3s ease, transform 0.3s ease; }
 
 /* ═══ SKELETON LOADING ═══ */
 .skeleton { background: linear-gradient(90deg, #f0ece6 25%, #e8e3dc 50%, #f0ece6 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.5s ease-in-out infinite; border-radius: 8px; }
