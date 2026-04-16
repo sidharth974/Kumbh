@@ -28,15 +28,20 @@ class RAGService:
         log.info(f"Loading embedding model: {EMBEDDING_MODEL}")
         self.embedder = SentenceTransformer(EMBEDDING_MODEL)
 
-        self.client = chromadb.PersistentClient(
-            path=str(CHROMA_DIR),
-            settings=Settings(anonymized_telemetry=False),
-        )
-        self.collection = self.client.get_or_create_collection(
-            name=COLLECTION_NAME,
-            metadata={"hnsw:space": "cosine"},
-        )
-        log.info(f"ChromaDB ready — {self.collection.count()} documents")
+        try:
+            self.client = chromadb.PersistentClient(
+                path=str(CHROMA_DIR),
+                settings=Settings(anonymized_telemetry=False),
+            )
+            self.collection = self.client.get_or_create_collection(
+                name=COLLECTION_NAME,
+                metadata={"hnsw:space": "cosine"},
+            )
+            log.info(f"ChromaDB ready — {self.collection.count()} documents")
+        except Exception as e:
+            log.warning(f"ChromaDB failed: {e}. RAG will return empty results (Groq handles responses).")
+            self.client = None
+            self.collection = None
 
         # Load emergency data for fast hardcoded lookup
         self._emergency_data = {}
@@ -57,6 +62,8 @@ class RAGService:
         top_k: int = 5,
     ) -> list[dict]:
         """Retrieve top-k relevant chunks. Falls back to cross-lingual if sparse."""
+        if self.collection is None:
+            return []
         embedding = self._embed(query)
 
         where = {"language": language}
@@ -177,7 +184,7 @@ class RAGService:
         return best
 
     def doc_count(self) -> int:
-        return self.collection.count()
+        return self.collection.count() if self.collection else 0
 
 
 # Singleton
