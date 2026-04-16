@@ -1,13 +1,16 @@
 """
-Auth routes — register, login, profile, logout.
+Auth routes — register, login, Google Sign-In, profile.
 """
 
+import os
 import uuid
 import logging
 import threading
 from datetime import datetime, timezone
 
+import httpx
 from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
 
 from api.models.database import db
 from api.models.schemas import (
@@ -21,6 +24,8 @@ from api.services.auth import (
 log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 
 
 @router.post("/register", response_model=AuthResponse)
@@ -128,6 +133,72 @@ async def login(req: LoginRequest):
         phone=row["phone"], preferred_language=row["preferred_language"],
         avatar_url=row["avatar_url"], created_at=row["created_at"],
     )
+    return AuthResponse(token=token, user=user)
+
+
+class GoogleAuthRequest(BaseModel):
+    credential: str  # Google ID token
+
+
+@router.post("/google", response_model=AuthResponse)
+async def google_signin(req: GoogleAuthRequest):
+    """Authenticate with Google Sign-In. Creates account if first time."""
+    # Verify the Google ID token
+    try:
+        resp = httpx.get(
+            f"https://oauth2.googleapis.com/tokeninfo?id_token={req.credential}",
+            timeout=10.0,
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+    except Exception as e:
+        log.warning(f"Google token verification failed: {e}")
+        raise HTTPException(status_code=401, detail="Invalid Google token")
+
+    # Validate audience (client ID)
+    if GOOGLE_CLIENT_ID and payload.get("aud") != GOOGLE_CLIENT_ID:
+        raise HTTPException(status_code=401, detail="Invalid token audience")
+
+    email = payload.get("email")
+    name = payload.get("name", email.split("@")[0])
+    avatar = payload.get("picture", "")
+
+    if not email:
+        raise HTTPException(status_code=400, detail="No email in Google token")
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Check if user exists
+    row = await db.fetch_one("SELECT * FROM users WHERE email = ?", (email,))
+
+    if row:
+        # Existing user — login
+        await db.execute("UPDATE users SET last_login = ?, avatar_url = ? WHERE id = ?",
+                         (now, avatar, row["id"]))
+        user_id = row["id"]
+        user = UserProfile(
+            id=row["id"], name=row["name"], email=row["email"],
+            phone=row["phone"], preferred_language=row["preferred_language"],
+            avatar_url=avatar or row["avatar_url"], created_at=row["created_at"],
+        )
+    else:
+        # New user — register
+        user_id = str(uuid.uuid4())
+        pw_hash = hash_password(str(uuid.uuid4()))  # Random password (Google auth only)
+        await db.execute(
+            """INSERT INTO users (id, name, email, phone, password_hash, preferred_language, avatar_url, created_at, last_login)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (user_id, name, email, "", pw_hash, "en", avatar, now, now),
+        )
+        user = UserProfile(
+            id=user_id, name=name, email=email,
+            phone="", preferred_language="en",
+            avatar_url=avatar, created_at=now,
+        )
+        # Welcome email
+        threading.Thread(target=send_welcome_email, args=(name, email), daemon=True).start()
+
+    token = create_token(user_id, email)
     return AuthResponse(token=token, user=user)
 
 
