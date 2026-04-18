@@ -286,14 +286,14 @@
 
   function initThemeColorPerPage() {
     var themeColorMap = {
-      'home': '#6B0F1A',       // maroon (hero gradient)
+      'home': '#4A0A12',       // deep maroon (Kumbh hero)
       'assistant': '#FFFFFF',   // white (chat)
-      'explore': '#1B1464',     // deep blue
-      'emergency': '#DC2626',   // red
+      'explore': '#0D47A1',     // Godavari blue
+      'emergency': '#B71C1C',   // deep red
       'map': '#FFFFFF',         // white
-      'login': '#6B0F1A',      // maroon
-      'register': '#6B0F1A',   // maroon
-      'profile': '#1A1A2E',    // dark (profile header)
+      'login': '#4A0A12',      // deep maroon
+      'register': '#4A0A12',   // deep maroon
+      'profile': '#1A0A06',    // sacred dark
     };
 
     var metaThemeColor = document.querySelector('meta[name="theme-color"]');

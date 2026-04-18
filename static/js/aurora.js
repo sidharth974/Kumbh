@@ -600,7 +600,7 @@
     var indicator = document.createElement('div');
     indicator.style.cssText =
       'position:fixed;top:0;left:0;height:2px;z-index:9999;' +
-      'background:linear-gradient(90deg,var(--saffron),var(--gold));' +
+      'background:linear-gradient(90deg,var(--gold-dark,#A67C00),var(--gold,#D4A017),var(--gold-light,#ECC94B));' +
       'transform-origin:left;transform:scaleX(0);' +
       'transition:transform 0.1s linear;pointer-events:none;width:100%;';
     indicator.id = 'scrollProgress';

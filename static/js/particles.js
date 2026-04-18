@@ -61,8 +61,8 @@
         vy: (Math.random() - 0.5) * BASE_SPEED * 2,
         radius: Math.random() * 2.5 + 1,
         opacity: Math.random() * 0.5 + 0.2,
-        // Gold/saffron/white palette
-        color: ['rgba(255,255,255,', 'rgba(240,199,94,', 'rgba(244,132,95,'][Math.floor(Math.random() * 3)],
+        // Sacred gold/saffron/warm palette (matching Kumbh logo)
+        color: ['rgba(255,255,255,', 'rgba(236,201,75,', 'rgba(212,160,23,', 'rgba(191,75,27,'][Math.floor(Math.random() * 4)],
         pulseSpeed: Math.random() * 0.02 + 0.01,
         pulsePhase: Math.random() * Math.PI * 2,
       });
@@ -187,7 +187,7 @@
 
         if (dist < MOUSE_RADIUS) {
           const alpha = (1 - dist / MOUSE_RADIUS) * 0.25;
-          ctx.strokeStyle = 'rgba(240,199,94,' + alpha + ')';
+          ctx.strokeStyle = 'rgba(212,160,23,' + alpha + ')';
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);

@@ -13,6 +13,8 @@ const SHELL = [
   '/static/places_geo.json',
   '/static/css/aurora.css',
   '/static/css/native-mobile.css',
+  '/static/css/redesign.css',
+  '/static/css/theme-kumbh.css',
   '/static/js/aurora.js',
   '/static/js/particles.js',
   '/static/js/native-mobile.js',
