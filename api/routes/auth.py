@@ -8,8 +8,11 @@ import logging
 import threading
 from datetime import datetime, timezone
 
+import secrets
 import httpx
-from fastapi import APIRouter, HTTPException, Depends
+from urllib.parse import urlencode
+from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi.responses import RedirectResponse, HTMLResponse
 from pydantic import BaseModel
 
 from api.models.database import db
@@ -26,6 +29,8 @@ log = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+APP_URL = os.environ.get("APP_URL", "https://siddharthnavnath7-yatri-ai.hf.space").rstrip("/")
 
 
 @router.post("/register", response_model=AuthResponse)
@@ -200,6 +205,147 @@ async def google_signin(req: GoogleAuthRequest):
 
     token = create_token(user_id, email)
     return AuthResponse(token=token, user=user)
+
+
+# ── Server-side Google OAuth redirect flow (works inside iframes) ──
+
+_auth_codes: dict = {}
+
+
+class GoogleExchangeRequest(BaseModel):
+    code: str
+
+
+async def _google_upsert(email: str, name: str, avatar: str):
+    """Create or update a Google-authenticated user. Returns (jwt, UserProfile)."""
+    if not email:
+        raise HTTPException(status_code=400, detail="No email in Google token")
+    name = name or email.split("@")[0]
+    now = datetime.now(timezone.utc).isoformat()
+    row = await db.fetch_one("SELECT * FROM users WHERE email = ?", (email,))
+    if row:
+        await db.execute(
+            "UPDATE users SET last_login = ?, avatar_url = ? WHERE id = ?",
+            (now, avatar, row["id"]),
+        )
+        user = UserProfile(
+            id=row["id"], name=row["name"], email=row["email"],
+            phone=row["phone"], preferred_language=row["preferred_language"],
+            avatar_url=avatar or row["avatar_url"], created_at=row["created_at"],
+        )
+    else:
+        uid = str(uuid.uuid4())
+        pw = hash_password(str(uuid.uuid4()))
+        await db.execute(
+            """INSERT INTO users (id, name, email, phone, password_hash, preferred_language, avatar_url, created_at, last_login)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (uid, name, email, "", pw, "en", avatar, now, now),
+        )
+        user = UserProfile(
+            id=uid, name=name, email=email,
+            phone="", preferred_language="en",
+            avatar_url=avatar, created_at=now,
+        )
+        threading.Thread(target=send_welcome_email, args=(name, email), daemon=True).start()
+    token = create_token(user.id, email)
+    return token, user
+
+
+@router.get("/google/login")
+async def google_login_redirect():
+    """Redirect browser to Google OAuth consent screen."""
+    redirect_uri = f"{APP_URL}/api/v1/auth/google/callback"
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": redirect_uri,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "prompt": "select_account",
+    }
+    return RedirectResponse(
+        f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}",
+        status_code=302,
+    )
+
+
+def _auth_close_page(*, success: bool, payload: str) -> str:
+    """HTML page that relays the OAuth result to the opener window and closes."""
+    if success:
+        msg = f"{{type:'google_auth_ok',code:'{payload}'}}"
+        text, color = "Signed in! Closing\u2026", "#16a34a"
+    else:
+        msg = f"{{type:'google_auth_err',error:'{payload}'}}"
+        text, color = "Sign-in failed. Closing\u2026", "#dc2626"
+    return (
+        "<!DOCTYPE html><html><head><title>Yatri AI</title></head>"
+        f'<body style="display:flex;align-items:center;justify-content:center;'
+        f'height:100vh;font-family:sans-serif;background:#fef7f0">'
+        f'<p style="color:{color};font-size:18px">{text}</p>'
+        f"<script>var m={msg};"
+        f"if(window.opener){{window.opener.postMessage(m,'*');setTimeout(function(){{window.close()}},600)}}"
+        f"else{{window.location.href='{APP_URL}/?'+(m.code?'auth_code='+m.code:'auth_error='+(m.error||'unknown'))}}"
+        f"</script></body></html>"
+    )
+
+
+@router.get("/google/callback")
+async def google_oauth_callback(code: str = Query(None), error: str = Query(None)):
+    """Handle the OAuth redirect back from Google."""
+    if error or not code:
+        return HTMLResponse(_auth_close_page(success=False, payload=error or "no_code"))
+
+    redirect_uri = f"{APP_URL}/api/v1/auth/google/callback"
+    try:
+        tr = httpx.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": code,
+                "client_id": GOOGLE_CLIENT_ID,
+                "client_secret": GOOGLE_CLIENT_SECRET,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            },
+            timeout=10.0,
+        )
+        tr.raise_for_status()
+        tokens = tr.json()
+    except Exception as exc:
+        log.warning("Google token exchange failed: %s", exc)
+        return HTMLResponse(_auth_close_page(success=False, payload="token_exchange"))
+
+    try:
+        ui = httpx.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {tokens['access_token']}"},
+            timeout=10.0,
+        )
+        ui.raise_for_status()
+        info = ui.json()
+    except Exception as exc:
+        log.warning("Google userinfo fetch failed: %s", exc)
+        return HTMLResponse(_auth_close_page(success=False, payload="userinfo"))
+
+    jwt_token, user = await _google_upsert(
+        info.get("email", ""), info.get("name", ""), info.get("picture", ""),
+    )
+
+    otp = secrets.token_urlsafe(32)
+    _auth_codes[otp] = {"token": jwt_token, "user": user, "ts": datetime.now(timezone.utc)}
+    # Purge expired codes (> 5 min)
+    cutoff = datetime.now(timezone.utc)
+    for k in [k for k, v in _auth_codes.items() if (cutoff - v["ts"]).total_seconds() > 300]:
+        _auth_codes.pop(k, None)
+
+    return HTMLResponse(_auth_close_page(success=True, payload=otp))
+
+
+@router.post("/google/exchange", response_model=AuthResponse)
+async def google_exchange(req: GoogleExchangeRequest):
+    """Exchange a one-time auth code (from OAuth callback) for a JWT."""
+    entry = _auth_codes.pop(req.code, None)
+    if not entry:
+        raise HTTPException(status_code=400, detail="Invalid or expired code")
+    return AuthResponse(token=entry["token"], user=entry["user"])
 
 
 @router.get("/profile", response_model=UserProfile)

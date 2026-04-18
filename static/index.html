@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no, viewport-fit=cover">
 <title>Yatri AI — Nashik Kumbh Mela 2027</title>
 <link rel="manifest" href="/static/manifest.json">
 <meta name="theme-color" content="#6B0F1A">
@@ -15,8 +15,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+<link rel="stylesheet" href="/static/css/aurora.css" />
+<link rel="stylesheet" href="/static/css/native-mobile.css" />
 <style>
 :root {
   --saffron: #E8652B;
@@ -1523,15 +1524,23 @@ body {
   <!-- ═══ HOME PAGE ═══ -->
   <div class="page active" id="page-home">
     <div class="hero">
+      <!-- Liquid gradient blobs -->
+      <div class="liquid-bg">
+        <div class="liquid-blob"></div>
+        <div class="liquid-blob"></div>
+        <div class="liquid-blob"></div>
+      </div>
+      <!-- Interactive particle canvas -->
+      <canvas class="hero-particles" id="heroParticles"></canvas>
       <div class="hero-float"><i class="ri-ancient-pavilion-line"></i></div>
       <div class="hero-float"><i class="ri-water-flash-line"></i></div>
       <div class="hero-float"><i class="ri-fire-line"></i></div>
       <div class="hero-float"><i class="ri-leaf-line"></i></div>
       <div class="hero-content">
-        <div class="hero-badge"><i class="ri-sparkling-2-fill"></i> AI-Powered Multilingual Assistant</div>
-        <h1 data-i18n="heroTitle">Your <span>Kumbh Mela</span> Companion</h1>
-        <p data-i18n="heroSub">Speak in Hindi, Marathi, or any language. Get instant answers about schedules, ghats, transport, food, and emergencies.</p>
-        <button class="hero-cta" onclick="navigate('assistant')">
+        <div class="hero-badge" data-reveal="scale"><i class="ri-sparkling-2-fill"></i> AI-Powered Multilingual Assistant</div>
+        <h1 data-i18n="heroTitle" data-reveal="up" data-reveal-delay="1">Your <span>Kumbh Mela</span> Companion</h1>
+        <p data-i18n="heroSub" data-reveal="up" data-reveal-delay="2">Speak in Hindi, Marathi, or any language. Get instant answers about schedules, ghats, transport, food, and emergencies.</p>
+        <button class="hero-cta" data-magnetic data-reveal="spring" data-reveal-delay="3" onclick="navigate('assistant')">
           <i class="ri-mic-fill"></i> <span data-i18n="startTalking">Start Talking</span>
         </button>
       </div>
@@ -1543,35 +1552,35 @@ body {
     </div>
 
     <div class="section">
-      <div class="section-title"><i class="ri-flashlight-line"></i> <span data-i18n="quickActions">Quick Actions</span></div>
-      <div class="actions-grid">
-        <div class="action-card animate-in animate-delay-1" onclick="navigate('assistant')">
+      <div class="section-title" data-reveal="left"><i class="ri-flashlight-line"></i> <span data-i18n="quickActions">Quick Actions</span></div>
+      <div class="actions-grid" data-reveal-stagger>
+        <div class="action-card" data-tilt data-reveal="up" onclick="navigate('assistant')">
           <div class="action-icon" style="background:linear-gradient(135deg,#E8652B,#C44B1A)"><i class="ri-mic-fill"></i></div>
           <h3>Voice Assistant</h3><p>Ask anything</p>
         </div>
-        <div class="action-card animate-in animate-delay-2" onclick="navigate('assistant')">
+        <div class="action-card" data-tilt data-reveal="up" onclick="navigate('assistant')">
           <div class="action-icon" style="background:linear-gradient(135deg,#7C3AED,#6D28D9)"><i class="ri-calendar-event-fill"></i></div>
           <h3>Kumbh Schedule</h3><p>Dates & events</p>
         </div>
-        <div class="action-card animate-in animate-delay-3" onclick="navigate('explore')">
+        <div class="action-card" data-tilt data-reveal="up" onclick="navigate('explore')">
           <div class="action-icon" style="background:linear-gradient(135deg,#2563EB,#1D4ED8)"><i class="ri-compass-3-fill"></i></div>
           <h3>Explore Places</h3><p>Temples & ghats</p>
         </div>
-        <div class="action-card animate-in animate-delay-4" onclick="navigate('emergency')">
+        <div class="action-card" data-tilt data-reveal="up" onclick="navigate('emergency')">
           <div class="action-icon" style="background:linear-gradient(135deg,#DC2626,#B91C1C)"><i class="ri-alarm-warning-fill"></i></div>
           <h3>Emergency SOS</h3><p>Instant help</p>
         </div>
-        <div class="action-card animate-in animate-delay-3" onclick="navigate('assistant')">
+        <div class="action-card" data-tilt data-reveal="up" onclick="navigate('assistant')">
           <div class="action-icon" style="background:linear-gradient(135deg,#059669,#047857)"><i class="ri-bus-fill"></i></div>
           <h3>Transport</h3><p>Routes & trains</p>
         </div>
-        <div class="action-card animate-in animate-delay-4" onclick="navigate('assistant')">
+        <div class="action-card" data-tilt data-reveal="up" onclick="navigate('assistant')">
           <div class="action-icon" style="background:linear-gradient(135deg,#D97706,#B45309)"><i class="ri-goblet-fill"></i></div>
           <h3>Food & Wine</h3><p>Misal, wineries</p>
         </div>
       </div>
 
-      <div class="info-banner animate-in animate-delay-3">
+      <div class="info-banner" data-reveal="up" data-reveal-delay="7">
         <h3><i class="ri-ancient-pavilion-fill"></i> Nashik Simhastha Kumbh Mela 2027</h3>
         <div class="info-row"><i class="ri-calendar-line"></i> July – September 2027 (expected)</div>
         <div class="info-row"><i class="ri-map-pin-line"></i> Ramkund, Godavari River, Nashik, Maharashtra</div>
@@ -1628,16 +1637,16 @@ body {
       </div>
       <div class="chat-messages" id="chatMessages">
         <div class="chat-welcome" id="chatWelcome">
-          <div class="chat-welcome-icon"><i class="ri-sparkling-2-fill"></i></div>
-          <h3 data-i18n="askAi">Ask Yatri AI</h3>
-          <p>Speak or type in any language. I understand Hindi, Marathi, English and more.</p>
-          <div class="chat-welcome-chips">
-            <div class="chat-welcome-chip" onclick="quickAsk('When is Kumbh Mela 2027?')"><i class="ri-calendar-line"></i> Kumbh dates</div>
-            <div class="chat-welcome-chip" onclick="quickAsk('Ramkund kya hai?')"><i class="ri-water-flash-line"></i> About Ramkund</div>
-            <div class="chat-welcome-chip" onclick="quickAsk('How to reach Trimbakeshwar from Nashik?')"><i class="ri-route-line"></i> Trimbakeshwar route</div>
-            <div class="chat-welcome-chip" onclick="quickAsk('Best misal pav in Nashik')"><i class="ri-restaurant-line"></i> Best misal pav</div>
-            <div class="chat-welcome-chip" onclick="quickAsk('Sula Vineyards timing and entry fee')"><i class="ri-goblet-line"></i> Sula Vineyards</div>
-            <div class="chat-welcome-chip" onclick="quickAsk('Emergency medical help')"><i class="ri-heart-pulse-line"></i> Medical emergency</div>
+          <div class="chat-welcome-icon" data-reveal="scale"><i class="ri-sparkling-2-fill"></i></div>
+          <h3 data-i18n="askAi" data-reveal="up" data-reveal-delay="1">Ask Yatri AI</h3>
+          <p data-reveal="up" data-reveal-delay="2">Speak or type in any language. I understand Hindi, Marathi, English and more.</p>
+          <div class="chat-welcome-chips" data-reveal-stagger>
+            <div class="chat-welcome-chip" data-reveal="up" onclick="quickAsk('When is Kumbh Mela 2027?')"><i class="ri-calendar-line"></i> Kumbh dates</div>
+            <div class="chat-welcome-chip" data-reveal="up" onclick="quickAsk('Ramkund kya hai?')"><i class="ri-water-flash-line"></i> About Ramkund</div>
+            <div class="chat-welcome-chip" data-reveal="up" onclick="quickAsk('How to reach Trimbakeshwar from Nashik?')"><i class="ri-route-line"></i> Trimbakeshwar route</div>
+            <div class="chat-welcome-chip" data-reveal="up" onclick="quickAsk('Best misal pav in Nashik')"><i class="ri-restaurant-line"></i> Best misal pav</div>
+            <div class="chat-welcome-chip" data-reveal="up" onclick="quickAsk('Sula Vineyards timing and entry fee')"><i class="ri-goblet-line"></i> Sula Vineyards</div>
+            <div class="chat-welcome-chip" data-reveal="up" onclick="quickAsk('Emergency medical help')"><i class="ri-heart-pulse-line"></i> Medical emergency</div>
           </div>
         </div>
       </div>
@@ -1647,7 +1656,7 @@ body {
       <div class="chat-input-bar">
         <input class="chat-input" id="chatInput" data-i18n="typeQuestion" placeholder="Type your question..." onkeydown="if(event.key==='Enter')sendText()">
         <button class="btn-send" id="sendBtn" onclick="sendText()"><i class="ri-send-plane-fill"></i></button>
-        <button class="btn-mic" id="micBtn" onclick="toggleMic()"><i class="ri-mic-fill"></i></button>
+        <button class="btn-mic" id="micBtn" data-magnetic onclick="toggleMic()"><i class="ri-mic-fill"></i></button>
       </div>
     </div>
   </div>
@@ -1655,8 +1664,8 @@ body {
   <!-- ═══ EXPLORE PAGE ═══ -->
   <div class="page" id="page-explore">
     <div class="explore-header">
-      <h2><i class="ri-compass-3-line"></i> Explore Nashik</h2>
-      <p style="opacity:0.7;font-size:14px;margin-top:4px" id="placeCount">Loading places...</p>
+      <h2 data-reveal="left"><i class="ri-compass-3-line"></i> Explore Nashik</h2>
+      <p style="opacity:0.7;font-size:14px;margin-top:4px" id="placeCount" data-reveal="up" data-reveal-delay="1">Loading places...</p>
     </div>
     <div class="filter-bar" id="filterBar"></div>
     <div class="places-list" id="placesList"></div>
@@ -1665,15 +1674,15 @@ body {
   <!-- ═══ EMERGENCY PAGE ═══ -->
   <div class="page" id="page-emergency">
     <div class="sos-header">
-      <h2><i class="ri-alarm-warning-fill"></i> Emergency SOS</h2>
-      <p>Instant help — no AI delay</p>
+      <h2 data-reveal="scale"><i class="ri-alarm-warning-fill"></i> Emergency SOS</h2>
+      <p data-reveal="up" data-reveal-delay="1">Instant help — no AI delay</p>
     </div>
-    <div class="sos-grid" id="sosGrid"></div>
+    <div class="sos-grid" id="sosGrid" data-reveal-stagger></div>
     <div id="sosResponse"></div>
-    <button class="sos-call-btn" onclick="window.location.href='tel:112'">
+    <button class="sos-call-btn" data-magnetic data-reveal="scale" onclick="window.location.href='tel:112'">
       <i class="ri-phone-fill"></i> Call 112 Emergency
     </button>
-    <div class="helpline-list" id="helplineList"></div>
+    <div class="helpline-list" id="helplineList" data-reveal-stagger></div>
   </div>
 
   <!-- ═══ MAP PAGE ═══ -->
@@ -1781,9 +1790,9 @@ body {
   <div class="page" id="page-login">
     <div class="auth-page">
       <div class="auth-card">
-        <div class="auth-logo"><i class="ri-ancient-pavilion-fill"></i></div>
-        <h2>Welcome Back</h2>
-        <p class="auth-sub">Sign in to your Yatri account</p>
+        <div class="auth-logo" data-reveal="scale"><i class="ri-ancient-pavilion-fill"></i></div>
+        <h2 data-reveal="up" data-reveal-delay="1">Welcome Back</h2>
+        <p class="auth-sub" data-reveal="up" data-reveal-delay="2">Sign in to your Yatri account</p>
         <div class="auth-error" id="loginError"></div>
         <div class="auth-field">
           <label>Email</label>
@@ -1818,9 +1827,9 @@ body {
   <div class="page" id="page-register">
     <div class="auth-page">
       <div class="auth-card">
-        <div class="auth-logo"><i class="ri-sparkling-2-fill"></i></div>
-        <h2>Join Yatri AI</h2>
-        <p class="auth-sub">Your Kumbh Mela companion</p>
+        <div class="auth-logo" data-reveal="scale"><i class="ri-sparkling-2-fill"></i></div>
+        <h2 data-reveal="up" data-reveal-delay="1">Join Yatri AI</h2>
+        <p class="auth-sub" data-reveal="up" data-reveal-delay="2">Your Kumbh Mela companion</p>
         <div class="auth-error" id="registerError"></div>
         <div class="auth-field">
           <label>Full Name</label>
@@ -1869,15 +1878,15 @@ body {
   <!-- ═══ PROFILE PAGE ═══ -->
   <div class="page" id="page-profile">
     <div class="profile-header">
-      <div class="profile-avatar" id="profileAvatar">Y</div>
-      <div class="profile-name" id="profileName">Yatri</div>
-      <div class="profile-email" id="profileEmail">Not signed in</div>
-      <div class="profile-lang-badge" id="profileLang">हिन्दी</div>
+      <div class="profile-avatar" id="profileAvatar" data-reveal="scale">Y</div>
+      <div class="profile-name" id="profileName" data-reveal="up" data-reveal-delay="1">Yatri</div>
+      <div class="profile-email" id="profileEmail" data-reveal="up" data-reveal-delay="2">Not signed in</div>
+      <div class="profile-lang-badge" id="profileLang" data-reveal="up" data-reveal-delay="3">हिन्दी</div>
     </div>
-    <div class="profile-stats">
-      <div class="profile-stat"><div class="num" id="statQueries">0</div><div class="label">Questions</div></div>
-      <div class="profile-stat"><div class="num" id="statLangs">0</div><div class="label">Languages</div></div>
-      <div class="profile-stat"><div class="num" id="statFavs">0</div><div class="label">Favorites</div></div>
+    <div class="profile-stats" data-reveal-stagger>
+      <div class="profile-stat" data-reveal="spring"><div class="num" id="statQueries" data-counter="0">0</div><div class="label">Questions</div></div>
+      <div class="profile-stat" data-reveal="spring"><div class="num" id="statLangs" data-counter="0">0</div><div class="label">Languages</div></div>
+      <div class="profile-stat" data-reveal="spring"><div class="num" id="statFavs" data-counter="0">0</div><div class="label">Favorites</div></div>
     </div>
     <div class="profile-section">
       <h3>Preferred Language</h3>
@@ -1908,8 +1917,8 @@ body {
   <!-- Feedback Modal -->
   <div class="loc-picker-overlay" id="feedbackOverlay" onclick="if(event.target===this)closeFeedbackModal()">
     <div class="loc-picker-sheet" style="max-width:480px">
-      <h3 style="display:flex;align-items:center;gap:8px;font-size:18px;margin-bottom:4px"><i class="ri-feedback-line" style="color:var(--saffron)"></i> Send Feedback</h3>
-      <p style="font-size:13px;color:var(--ink-muted);margin-bottom:16px">Help us improve Yatri AI</p>
+      <h3 style="display:flex;align-items:center;gap:8px;font-size:18px;margin-bottom:4px" data-reveal="left"><i class="ri-feedback-line" style="color:var(--saffron)"></i> Send Feedback</h3>
+      <p style="font-size:13px;color:var(--ink-muted);margin-bottom:16px" data-reveal="up" data-reveal-delay="1">Help us improve Yatri AI</p>
 
       <div class="auth-field">
         <label>Type</label>
@@ -2892,77 +2901,71 @@ async function handleRegister() {
   }
 }
 
-// ═══ GOOGLE SIGN-IN ═══
-const GOOGLE_CLIENT_ID = '562145323688-83v8t439rdcrqfetn88krsbpqff5ihr8.apps.googleusercontent.com';
-let _googleInitialized = false;
-
-function _initGoogle() {
-  if (_googleInitialized || typeof google === 'undefined' || !google.accounts) return false;
-  google.accounts.id.initialize({
-    client_id: GOOGLE_CLIENT_ID,
-    callback: handleGoogleResponse,
-    auto_select: false,
-    cancel_on_tap_outside: true,
-  });
-  _googleInitialized = true;
-  return true;
-}
-
-// Auto-init when Google script loads
-window.addEventListener('load', () => setTimeout(_initGoogle, 1000));
-
+// ═══ GOOGLE SIGN-IN (server-side OAuth redirect) ═══
 function googleSignIn() {
-  if (!_initGoogle() && !_googleInitialized) {
-    showToast('Google Sign-In is loading... please try again');
-    return;
+  const url = API + '/api/v1/auth/google/login';
+  const w = 500, h = 600;
+  const left = (screen.width - w) / 2, top = (screen.height - h) / 2;
+  const popup = window.open(url, 'google_auth', 'width='+w+',height='+h+',left='+left+',top='+top);
+  if (!popup || popup.closed) {
+    showToast('Please allow popups for Google Sign-In');
   }
-  // Use prompt (One Tap) — works on most browsers
-  google.accounts.id.prompt((notification) => {
-    if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-      // Fallback: render a hidden button and click it programmatically
-      let container = document.getElementById('_gsi_container');
-      if (!container) {
-        container = document.createElement('div');
-        container.id = '_gsi_container';
-        container.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:99999';
-        document.body.appendChild(container);
-      }
-      container.innerHTML = '';
-      google.accounts.id.renderButton(container, {
-        theme: 'outline', size: 'large', width: 300, text: 'continue_with',
-      });
-      // Auto-click after render
-      setTimeout(() => {
-        const btn = container.querySelector('[role="button"]') || container.querySelector('div[style]');
-        if (btn) btn.click();
-      }, 200);
-      // Clean up after 30s
-      setTimeout(() => { if (container) container.remove(); }, 30000);
-    }
-  });
 }
 
-async function handleGoogleResponse(response) {
-  try {
-    const res = await fetch(API + '/api/v1/auth/google', {
+// Listen for OAuth result from popup window
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'google_auth_ok' && e.data.code) {
+    fetch(API + '/api/v1/auth/google/exchange', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ credential: response.credential }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Google sign-in failed');
-    authToken = data.token;
-    currentUser = data.user;
-    localStorage.setItem('yatri_token', authToken);
-    localStorage.setItem('yatri_user', JSON.stringify(currentUser));
-    updateAuthUI();
-    loadServerHistory();
-    navigate('home');
-    showToast('Welcome, ' + currentUser.name.split(' ')[0] + '!');
-  } catch (e) {
-    showToast('Google sign-in failed: ' + e.message);
+      body: JSON.stringify({ code: e.data.code }),
+    })
+    .then(function(r) { if (!r.ok) throw new Error('fail'); return r.json(); })
+    .then(function(data) {
+      authToken = data.token;
+      currentUser = data.user;
+      localStorage.setItem('yatri_token', authToken);
+      localStorage.setItem('yatri_user', JSON.stringify(currentUser));
+      updateAuthUI();
+      loadServerHistory();
+      navigate('home');
+      showToast('Welcome, ' + currentUser.name.split(' ')[0] + '!');
+    })
+    .catch(function() { showToast('Google sign-in failed'); });
+  } else if (e.data && e.data.type === 'google_auth_err') {
+    showToast('Google sign-in failed: ' + (e.data.error || 'unknown error'));
   }
-}
+});
+
+// Handle OAuth redirect fallback (when popup was blocked)
+window.addEventListener('load', function() {
+  var params = new URLSearchParams(window.location.search);
+  var authCode = params.get('auth_code');
+  var authError = params.get('auth_error');
+  if (authError) {
+    window.history.replaceState({}, '', '/');
+    showToast('Google sign-in failed: ' + authError);
+  } else if (authCode) {
+    window.history.replaceState({}, '', '/');
+    fetch(API + '/api/v1/auth/google/exchange', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: authCode }),
+    })
+    .then(function(r) { if (!r.ok) throw new Error('fail'); return r.json(); })
+    .then(function(data) {
+      authToken = data.token;
+      currentUser = data.user;
+      localStorage.setItem('yatri_token', authToken);
+      localStorage.setItem('yatri_user', JSON.stringify(currentUser));
+      updateAuthUI();
+      loadServerHistory();
+      navigate('home');
+      showToast('Welcome, ' + currentUser.name.split(' ')[0] + '!');
+    })
+    .catch(function() { showToast('Google sign-in failed'); });
+  }
+});
 
 function handleLogout() {
   authToken = null; currentUser = null;
@@ -4315,6 +4318,10 @@ navigate = function(page) {
 };
 </script>
 
+<!-- Aurora Animation System -->
+<script src="/static/js/particles.js"></script>
+<script src="/static/js/aurora.js"></script>
+<script src="/static/js/native-mobile.js"></script>
 
 </body>
 </html>

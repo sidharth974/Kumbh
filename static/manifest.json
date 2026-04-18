@@ -5,12 +5,18 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
   "background_color": "#FFF8F0",
   "theme_color": "#6B0F1A",
   "categories": ["travel", "navigation", "utilities"],
   "lang": "en",
   "dir": "ltr",
+  "prefer_related_applications": false,
+  "handle_links": "preferred",
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
   "icons": [
     {
       "src": "/static/icon-192.png",
@@ -29,20 +35,42 @@
     {
       "name": "Ask AI",
       "short_name": "Chat",
-      "url": "/?page=chat",
+      "description": "Voice or text chat with Yatri AI",
+      "url": "/?page=assistant",
       "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]
     },
     {
       "name": "Explore Nashik",
       "short_name": "Explore",
+      "description": "Browse 200+ places in Nashik",
       "url": "/?page=explore",
       "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]
     },
     {
       "name": "Emergency SOS",
       "short_name": "SOS",
+      "description": "Instant emergency help and hotlines",
       "url": "/?page=emergency",
       "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]
+    },
+    {
+      "name": "Map & Navigation",
+      "short_name": "Map",
+      "description": "Interactive map with directions",
+      "url": "/?page=map",
+      "icons": [{"src": "/static/icon-192.png", "sizes": "192x192"}]
     }
-  ]
+  ],
+  "share_target": {
+    "action": "/?share=true",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  }
 }

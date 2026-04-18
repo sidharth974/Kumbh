@@ -1,7 +1,7 @@
-const CACHE_VERSION = 'yatri-v3';
-const STATIC_CACHE = 'yatri-static-v3';
-const API_CACHE = 'yatri-api-v3';
-const IMG_CACHE = 'yatri-img-v3';
+const CACHE_VERSION = 'yatri-v4';
+const STATIC_CACHE = 'yatri-static-v4';
+const API_CACHE = 'yatri-api-v4';
+const IMG_CACHE = 'yatri-img-v4';
 
 // Core shell — always cached for instant load
 const SHELL = [
@@ -11,6 +11,11 @@ const SHELL = [
   '/static/icon-192.png',
   '/static/icon-512.png',
   '/static/places_geo.json',
+  '/static/css/aurora.css',
+  '/static/css/native-mobile.css',
+  '/static/js/aurora.js',
+  '/static/js/particles.js',
+  '/static/js/native-mobile.js',
 ];
 
 // External CDN assets to precache
